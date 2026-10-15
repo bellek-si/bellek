@@ -1,0 +1,27 @@
+class Bellek < Formula
+  desc "Shared memory for Claude Code sessions: hooks, MCP bridge and CLI"
+  homepage "https://bellek.si"
+  version "@VERSION@"
+  license "Apache-2.0"
+
+  on_macos do
+    on_arm do
+      url "https://github.com/bellek-si/bellek/releases/download/@TAG@/bellek-darwin-arm64.tar.gz"
+      sha256 "@SHA256_DARWIN_ARM64@"
+    end
+    on_intel do
+      url "https://github.com/bellek-si/bellek/releases/download/@TAG@/bellek-darwin-amd64.tar.gz"
+      sha256 "@SHA256_DARWIN_AMD64@"
+    end
+  end
+
+  depends_on :macos
+
+  def install
+    bin.install "bellek"
+  end
+
+  test do
+    assert_equal "@TAG@", shell_output("#{bin}/bellek version").strip
+  end
+end

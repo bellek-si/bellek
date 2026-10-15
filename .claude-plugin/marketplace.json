@@ -1,0 +1,13 @@
+{
+  "name": "bellek",
+  "owner": {
+    "name": "bellek-si"
+  },
+  "plugins": [
+    {
+      "name": "bellek",
+      "source": "./plugin",
+      "description": "Shared memory for coding sessions: hooks, briefing in context and the Bellek MCP tools."
+    }
+  ]
+}

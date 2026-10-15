@@ -1,0 +1,10 @@
+{
+  "name": "bellek",
+  "description": "Shared memory for coding sessions: records prompts, files and progress through hooks, puts the briefing in context at session start, and exposes the twelve Bellek tools over MCP.",
+  "version": "v0.1.0",
+  "author": {
+    "name": "bellek-si"
+  },
+  "homepage": "https://github.com/bellek-si/bellek",
+  "keywords": ["memory", "tasks", "hooks", "mcp"]
+}
