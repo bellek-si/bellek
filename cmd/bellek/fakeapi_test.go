@@ -14,7 +14,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// errUnreachable is what a call returns when nothing answers at the server's address.
 var errUnreachable = &url.Error{Op: "Post", URL: "http://bellek.test/v1", Err: errors.New("connection refused")}
 
 var errRefusedKey = &client.Error{Status: http.StatusUnauthorized, Code: api.CodeUnauthorized, Message: "missing or invalid key"}
@@ -23,37 +22,22 @@ func errInvalid(message string) error {
 	return &client.Error{Status: http.StatusBadRequest, Code: api.CodeValidation, Message: message}
 }
 
-// fakeAPI stands in for the server behind hookAPI. It keeps what the hooks
-// send and answers what each test sets, refusing an ended or unknown session
-// the way the server does.
 type fakeAPI struct {
-	sessions []*fakeSession
-	// noteLog holds every note the server took, oldest first.
-	noteLog []api.NoteInput
-	// sent lists the captures that reached the server, replays included and
-	// refusals too, as op:detail.
-	sent []string
-	// promptAcks holds the acknowledgements of every prompt that reached the server.
+	sessions   []*fakeSession
+	noteLog    []api.NoteInput
+	sent       []string
 	promptAcks [][]uuid.UUID
-	// calls names every method the hooks called, whether it failed or not.
-	calls []string
+	calls      []string
 
-	// down fails every call as if the server were unreachable.
-	down bool
-	// failNotes fails that many next notes as if the server were unreachable.
+	down      bool
 	failNotes int
-	// errs fails a method, by name, with an error before it reaches the server.
-	errs map[string]error
-	// refused answers a note with this key with this error.
-	refused map[string]error
+	errs      map[string]error
+	refused   map[string]error
 
 	briefing api.Briefing
-	// prompt is the base of every prompt answer; the turn, the signals and the
-	// focus come from the session.
-	prompt api.PromptResult
-	// links and editors are what an artifacts answer names for a path.
-	links   map[string][]api.Ref
-	editors map[string][]api.SessionRef
+	prompt   api.PromptResult
+	links    map[string][]api.Ref
+	editors  map[string][]api.SessionRef
 }
 
 type fakeSession struct {
@@ -65,7 +49,6 @@ type fakeSession struct {
 	Artifacts [][]string
 	Progress  []api.ProgressInput
 	Notes     []api.NoteInput
-	// Briefings holds the token budget of every briefing read.
 	Briefings []int
 	EndReason string
 
@@ -92,10 +75,8 @@ func (a *fakeAPI) byID(id uuid.UUID) *fakeSession {
 	return nil
 }
 
-// end ends a session on the server side, as the idle sweep does.
 func (a *fakeAPI) end(id uuid.UUID) { a.byID(id).ended = true }
 
-// forget drops a session on the server side, as deleting its project does.
 func (a *fakeAPI) forget(id uuid.UUID) { a.byID(id).gone = true }
 
 func (a *fakeAPI) called(method string) int {
@@ -108,7 +89,6 @@ func (a *fakeAPI) called(method string) int {
 	return n
 }
 
-// notesIn lists the notes the server took for one scope, kind and key, oldest first.
 func (a *fakeAPI) notesIn(scope string, kind api.Kind, key string) []api.NoteInput {
 	var out []api.NoteInput
 	for _, n := range a.noteLog {
@@ -193,8 +173,6 @@ func (a *fakeAPI) Note(_ context.Context, in api.NoteInput) (*api.Node, error) {
 	return &api.Node{ID: uuid.New(), Kind: api.Kind(cmp.Or(in.Kind, string(api.KindNote))), Key: in.Key, Title: in.Title}, nil
 }
 
-// Prompt marks the acknowledged signals read and answers the ones still
-// unread, so a signal comes back until a prompt acknowledges it.
 func (a *fakeAPI) Prompt(_ context.Context, id uuid.UUID, message string, ack []uuid.UUID) (*api.PromptResult, error) {
 	if err := a.fail("Prompt"); err != nil {
 		return nil, err

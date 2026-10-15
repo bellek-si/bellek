@@ -20,8 +20,6 @@ type request struct {
 	method, uri, auth, contentType, body string
 }
 
-// recording serves every request with one status and one body, and keeps
-// the last request.
 func recording(t *testing.T, status int, answer string) (*client.Client, *request) {
 	t.Helper()
 	got := &request{}

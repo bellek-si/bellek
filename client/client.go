@@ -32,9 +32,8 @@ func WithHTTPClient(h *http.Client) Option { return func(c *Client) { c.http = h
 
 func WithTimeout(d time.Duration) Option { return func(c *Client) { c.timeout = d } }
 
-// The timeout and the transport are applied after the options run, on a copy
-// of whatever client is current, so the two options are order independent and
-// WithHTTPClient never has its caller's client mutated.
+// New never changes the http.Client given to WithHTTPClient, and the options
+// may come in any order.
 func New(baseURL, token string, opts ...Option) *Client {
 	c := &Client{base: strings.TrimRight(baseURL, "/"), token: token, http: &http.Client{Timeout: defaultTimeout}}
 	for _, o := range opts {
@@ -144,8 +143,6 @@ func (c *Client) Note(ctx context.Context, in api.NoteInput) (*api.Node, error) 
 	return call[api.Node](ctx, c, http.MethodPost, "/v1/notes", in)
 }
 
-// Export reads one page of a project. Pass the Next of a page to read the one
-// after it; nil reads the first.
 func (c *Client) Export(ctx context.Context, project string, after *api.ExportCursor) (*api.Snapshot, error) {
 	path := "/v1/projects/" + url.PathEscape(project) + "/export"
 	if after != nil {
@@ -158,13 +155,12 @@ func (c *Client) Import(ctx context.Context, project string, docs []api.ImportDo
 	return call[api.ImportReport](ctx, c, http.MethodPost, "/v1/projects/"+url.PathEscape(project)+"/import", api.ImportInput{Docs: docs})
 }
 
-// Report fetches the markdown report on a task or a session, kind task or session.
+// Report fetches the markdown report on a node; kind is task or session.
 func (c *Client) Report(ctx context.Context, project, kind, key string) (*api.Report, error) {
 	query := url.Values{"projectKey": {project}, "kind": {kind}}.Encode()
 	return call[api.Report](ctx, c, http.MethodGet, "/v1/nodes/"+url.PathEscape(key)+"/report?"+query, nil)
 }
 
-// Me names the key the client holds, its user and its workspace.
 func (c *Client) Me(ctx context.Context) (*api.Me, error) {
 	return call[api.Me](ctx, c, http.MethodGet, "/v1/me", nil)
 }

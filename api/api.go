@@ -25,7 +25,8 @@ const GlobalProjectKey = "global"
 
 const MemorySource = "claudeMemory"
 
-// TagRemoved marks the version memory sync writes when its file is deleted.
+// TagRemoved marks the version memory sync writes when a memory file is deleted
+// or its scope changes.
 const TagRemoved = "removed"
 
 const (

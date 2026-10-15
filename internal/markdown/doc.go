@@ -86,7 +86,6 @@ func Encode(d Doc) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-// splitFrontMatter separates the fenced front matter from the body.
 func splitFrontMatter(b []byte) (head, body string, err error) {
 	text := string(b)
 	if !strings.HasPrefix(text, fence) {
@@ -110,10 +109,8 @@ func Decode(b []byte) (Doc, error) {
 		return Doc{}, err
 	}
 	d := Doc{Kind: fm.Kind, Key: fm.Key, Title: fm.Title, Status: fm.Status, Tags: fm.Tags, Props: fm.Props, Links: fm.Links, Visibility: fm.Visibility, Version: fm.Version}
-	// A timestamp that will not parse decodes to the zero time rather than
-	// failing the file. readDocs does not carry either field into an
-	// ImportDoc, so refusing a hand written date would cost an import and
-	// buy nothing.
+	// readDocs does not carry either timestamp into an ImportDoc, so refusing
+	// a hand written date would cost an import and buy nothing.
 	if fm.CreatedAt != "" {
 		d.CreatedAt, _ = time.Parse(time.RFC3339Nano, fm.CreatedAt)
 	}

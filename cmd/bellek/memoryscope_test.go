@@ -28,8 +28,6 @@ func (a *failMoves) Note(ctx context.Context, in api.NoteInput) (*api.Node, erro
 	return a.hookAPI.Note(ctx, in)
 }
 
-// seedPreScopeCopy syncs a feedback memory, then sets its marker back to the
-// project, as a marker written before memories had scopes reads.
 func (f *hookFixture) seedPreScopeCopy(t *testing.T, dir, name string) {
 	t.Helper()
 	writeMemory(t, dir, name, "Use pnpm", "feedback", "2026-09-17T10:00:00.000Z", "Always pnpm.")

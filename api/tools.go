@@ -1,10 +1,9 @@
 package api
 
-// Instructions tells the model how to use the tools. The MCP server sends it
-// when a client connects.
+// Instructions is what the MCP server sends a client when it connects.
 const Instructions = "Bellek is the shared memory for this project. With the Bellek hooks installed the session is already started and its briefing is already in context; the session id is in that context. Search with memory_search or memory_get before touching a task or a file. When the user asks for a piece of work, or you pull tasks from a tracker such as Linear or Jira, create each one with task_upsert, link related work with parentKey and dependsOn, and claim the one you start with task_claim, which returns its briefing; a claim leaves the status alone, so move a todo task to inProgress with task_status. Do all three before your first edit, even for a small one line request. Every task has an id, the project key and a number such as widgets-12; use it when you name a task to the user, and pass it wherever a task key goes. Record decisions, lessons and open questions with memory_note. Move the task with task_status: done when finished, review when it needs a look, blocked with the reason, cancelled when dropped; task_handoff when you stop mid task. When you move a task to done or review, write a memory_note tagged report with key <task key>-report and relatedKey the task, with the headings ## What, ## Why, ## Changes and ## Conclusion. Other sessions are listed in the briefing with their key and focus; a live Claude Code peer is reached with SendMessage by its name, any other session with memory_signal to its key, and a request signal arrives on that session's next prompt; answer one with kind response and the same threadId. Call session_start, then memory_briefing, only when no briefing is in context, and session_end only if you called session_start."
 
-// Tool is one of the twelve MCP tools. ReadOnly sets its MCP read only hint.
+// Tool is an MCP tool; ReadOnly sets its MCP read only hint.
 type Tool struct {
 	Name        string
 	Description string
@@ -26,7 +25,6 @@ var (
 	ToolTaskNext     = Tool{Name: "task_next", Description: "Unblocked, unclaimed tasks ordered by priority.", ReadOnly: true}
 )
 
-// Tools lists the MCP tools in the order the server offers them.
 var Tools = []Tool{
 	ToolSessionStart, ToolSessionEnd, ToolBriefing, ToolGet, ToolSearch, ToolNote, ToolSignal,
 	ToolTaskUpsert, ToolTaskStatus, ToolTaskClaim, ToolTaskHandoff, ToolTaskNext,
@@ -43,7 +41,6 @@ type SessionArgs struct {
 	SessionID string `json:"sessionId" jsonschema:"session id returned by session_start"`
 }
 
-// Session lets a handler read the session id of any arguments that embed SessionArgs.
 func (a SessionArgs) Session() string { return a.SessionID }
 
 type BriefingArgs struct {

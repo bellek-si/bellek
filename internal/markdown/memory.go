@@ -9,13 +9,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Memory is one Claude Code auto memory file: front matter with a name, a
-// description and a metadata map, then the fact as markdown.
 type Memory struct {
-	Name        string
-	Description string
-	Type        string
-	// Scope is project or global when the front matter names one, else empty.
+	Name            string
+	Description     string
+	Type            string
 	Scope           string
 	OriginSessionID string
 	Modified        time.Time
@@ -38,8 +35,6 @@ const (
 	ScopeGlobal  = "global"
 )
 
-// ErrNotMemory says the file does not have the auto memory front matter shape.
-// Any other error means it does and something in it is wrong.
 var ErrNotMemory = errors.New("not a memory file")
 
 func DecodeMemory(b []byte) (Memory, error) {

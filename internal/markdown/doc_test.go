@@ -112,8 +112,6 @@ func TestEncodeRefusesABodyQuotingTheTimelineMarker(t *testing.T) {
 }
 
 func TestEncodeKeepsSubSecondTimestamps(t *testing.T) {
-	// A memory's modified time is written at nanosecond precision, so the
-	// document half of the same pipeline has to read and write it back.
 	at := time.Date(2026, 9, 16, 10, 0, 0, 500_000_000, time.UTC)
 	b, err := Encode(Doc{Kind: "note", Key: "n", Title: "N", CreatedAt: at, UpdatedAt: at})
 	require.NoError(t, err)

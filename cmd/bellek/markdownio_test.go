@@ -286,8 +286,6 @@ func TestWriteSnapshotNamesALinkToANodeOnAnotherPage(t *testing.T) {
 func TestWriteSnapshotRefusesAKindThatLeavesTheExportDirectory(t *testing.T) {
 	root := t.TempDir()
 	dir := filepath.Join(root, "out")
-	// The kind comes from the server's answer like the key does, so a hostile
-	// server, or anyone in the middle of a plain http connection, picks it.
 	evil := &api.Node{ID: uuid.New(), Kind: api.Kind("../agent"), Key: "evil", Title: "x", Version: 1, Origin: "agent"}
 	n, err := writeSnapshot(dir, &api.Snapshot{Nodes: []*api.Node{evil}})
 	require.NoFileExists(t, filepath.Join(root, "agents", "evil.md"), "the kind directory must stay inside the export directory")

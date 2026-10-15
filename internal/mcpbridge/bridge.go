@@ -43,13 +43,8 @@ func localsAt(ctx context.Context, cwd string) Locals {
 	return l
 }
 
-// A call can name a cwd of its own; the remote and branch then come from that
-// directory, within this budget, not from the bridge's.
 const callerGitTimeout = time.Second
 
-// values names each local the way the tools take it, from the argument structs
-// in api, so the bridge fills what the server reads. Only the locals that are
-// set come back, never another field of those structs.
 func (l Locals) values() map[string]string {
 	raw, _ := json.Marshal(api.SessionStartArgs{
 		ScopeArgs: api.ScopeArgs{Cwd: l.Cwd, RepoRemote: l.RepoRemote, RepoRoot: l.RepoRoot},
@@ -66,8 +61,6 @@ func (l Locals) values() map[string]string {
 	return values
 }
 
-// bearerTransport sends the key to the server's own host only, so a redirect
-// to another host does not carry it there.
 type bearerTransport struct {
 	token string
 	host  string
@@ -142,8 +135,6 @@ func New(ctx context.Context, remote *mcp.ClientSession, locals Locals, version 
 	return srv, nil
 }
 
-// The server logs the service error code; a failure forwarded from it arrives
-// as text, so the bridge logs that under the same key rather than a bare flag.
 func firstText(res *mcp.CallToolResult) string {
 	for _, c := range res.Content {
 		if t, ok := c.(*mcp.TextContent); ok {

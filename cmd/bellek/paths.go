@@ -55,7 +55,6 @@ func relativePaths(paths []string, cwd string, ignore []string, skip func(string
 	return out
 }
 
-// memoryPaths lists the memory fact files a file tool wrote, in input order.
 func memoryPaths(raw json.RawMessage, isMemory func(string) bool) []string {
 	var input map[string]any
 	if err := json.Unmarshal(raw, &input); err != nil {
@@ -72,7 +71,6 @@ func memoryPaths(raw json.RawMessage, isMemory func(string) bool) []string {
 	return out
 }
 
-// editorPaths reads the file a file tool names, plus the ones a multi edit lists.
 func editorPaths(input map[string]any) []string {
 	var out []string
 	for _, key := range []string{"file_path", "notebook_path"} {
@@ -90,7 +88,6 @@ func editorPaths(input map[string]any) []string {
 	return out
 }
 
-// relativeTo returns p relative to root. A relative p is taken as already relative to root.
 // Symlinks are resolved on both sides because git prints /private/var where macOS gives /var.
 func relativeTo(root, p string) (string, bool) {
 	p = filepath.Clean(p)
@@ -130,8 +127,6 @@ func relativeToAny(roots []string, p string) (string, bool) {
 	return "", false
 }
 
-// resolved follows symlinks on the deepest existing ancestor of p, so a file about to be
-// written under a symlinked directory still resolves.
 func resolved(p string) string {
 	rest := ""
 	for dir := p; ; dir = filepath.Dir(dir) {

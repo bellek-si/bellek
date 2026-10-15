@@ -54,8 +54,6 @@ func writeSnapshot(dir string, snap *api.Snapshot) (int, error) {
 		if !n.Kind.Valid() {
 			return written, fmt.Errorf("kind %q is not known", n.Kind)
 		}
-		// An artifact key is a repository relative path, so the file sits in a
-		// tree the kind directory alone does not create.
 		kindDir := filepath.Join(dir, string(n.Kind)+"s")
 		file := filepath.Join(kindDir, n.Key+".md")
 		if rel, err := filepath.Rel(kindDir, file); err != nil || !filepath.IsLocal(rel) {

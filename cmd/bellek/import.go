@@ -59,9 +59,8 @@ func printImport(out io.Writer, r api.ImportReport) {
 	fmt.Fprintln(out)
 }
 
-// importBatchBytes keeps a batch under the server's body limit with room for
-// the request around it. A link into a later batch is stored as a forward link
-// and resolves when that batch creates its target.
+// A link into a later batch stays a forward link until that batch creates its
+// target.
 const importBatchBytes = api.MaxRequestBytes * 3 / 4
 
 // importTimeout matches the server's write timeout. One full batch takes over

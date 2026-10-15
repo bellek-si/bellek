@@ -18,8 +18,6 @@ func object(properties ...string) map[string]any {
 	return map[string]any{"type": "object", "properties": props}
 }
 
-// echo answers the way the server's tools do, a line of text and then the
-// payload, which here is the arguments the call arrived with.
 func echo(_ context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 	return &mcp.CallToolResult{Content: []mcp.Content{
 		&mcp.TextContent{Text: req.Params.Name + " done"},
@@ -27,16 +25,12 @@ func echo(_ context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, err
 	}}, nil
 }
 
-// refuse answers the way the server reports a failed tool, as an error result
-// that starts with the error code.
 func refuse(text string) mcp.ToolHandler {
 	return func(context.Context, *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		return &mcp.CallToolResult{IsError: true, Content: []mcp.Content{&mcp.TextContent{Text: text}}}, nil
 	}
 }
 
-// newRemote stands in for the server's MCP endpoint with a few of its tools,
-// whose schemas name the values the bridge fills in.
 func newRemote() *mcp.Server {
 	srv := mcp.NewServer(&mcp.Implementation{Name: "remote", Version: "test"}, &mcp.ServerOptions{Instructions: "Search before you edit."})
 	srv.AddTool(&mcp.Tool{Name: "session_start", Description: "Start a session.", InputSchema: object("agentKind", "agentId", "projectKey", "cwd", "repoRemote", "repoRoot", "branch")}, echo)

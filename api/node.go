@@ -26,7 +26,6 @@ func (k Kind) Valid() bool {
 	return false
 }
 
-// Private reports whether a kind may be private.
 func (k Kind) Private() bool { return k == KindNote || k == KindDecision }
 
 type Origin string
@@ -182,7 +181,6 @@ type Event struct {
 	CreatedAt time.Time      `json:"createdAt"`
 }
 
-// Ref names a node the way a hook shows it to the model.
 type Ref struct {
 	Kind   Kind   `json:"kind"`
 	Key    string `json:"key"`

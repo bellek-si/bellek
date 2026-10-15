@@ -143,19 +143,12 @@ func (s *hookState) DeleteRecall(claudeID string) {
 	}
 }
 
-// recallMarker is what the model was already told in this context window:
-// whether it got the full instruction, the files whose links were shown, and
-// the signals printed on the last prompt and not yet acknowledged.
 type recallMarker struct {
 	Instructed bool        `json:"instructed"`
 	Files      []string    `json:"files"`
 	Signals    []uuid.UUID `json:"signals"`
 }
 
-// Recalled reads the marker, which is removed when the context is replaced. One
-// that cannot be read counts as empty, so the full instruction is printed
-// again, which is what happens when the recall directory cannot be created.
-// A marker from before the signals field is a plain list of files.
 func (s *hookState) Recalled(claudeID string) recallMarker {
 	var out recallMarker
 	p, ok := s.recallPath(claudeID)
@@ -198,8 +191,6 @@ type spooled struct {
 	At        time.Time      `json:"at"`
 }
 
-// markerEntry is what the hook last sent for one memory name, so a session start
-// walk sends only files that changed since and notices files that are gone.
 type markerEntry struct {
 	Modified    time.Time `json:"modified"`
 	Description string    `json:"description"`

@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// minClientVersion is the oldest client the server serves, as /v1/health names it.
 const minClientVersion = "v0.1.0"
 
 func TestConfigCommandPrintsTheServerURL(t *testing.T) {

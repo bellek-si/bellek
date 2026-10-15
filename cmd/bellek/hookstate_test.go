@@ -13,8 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Every writer makes its own directory before it writes, so a plain file sitting
-// where that directory belongs is the one failure all of them share.
 func TestHookStateWritersReportADirectoryTheyCannotCreate(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -81,8 +79,6 @@ func TestDrainSendsNoMoreThanTheLimit(t *testing.T) {
 	require.Len(t, entries, 2, "the rest wait for the next hook")
 }
 
-// Renaming onto a name a directory already holds fails the way another hook
-// holding the claim does, without depending on file modes.
 func TestDrainLeavesEntriesItCannotClaim(t *testing.T) {
 	clock := time.Date(2026, 9, 16, 12, 0, 0, 0, time.UTC)
 	tests := []struct {

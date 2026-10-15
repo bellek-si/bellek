@@ -32,9 +32,8 @@ func memoryKind(memoryType string) string {
 	return "note"
 }
 
-// The title is redacted here because it comes from front matter the model
-// wrote; the key is not, because the marker in the state directory is keyed by
-// the raw name.
+// The key is not redacted, because the marker in the state directory is keyed
+// by the raw name.
 func baseNote(id uuid.UUID, name, description, memoryType, scope string, modified time.Time) api.NoteInput {
 	// The fallback comes after the pass, because a description that redacts
 	// to nothing would otherwise leave an empty title, which Note refuses.
@@ -68,8 +67,6 @@ func memoryNote(id uuid.UUID, m markdown.Memory) api.NoteInput {
 	return n
 }
 
-// removedNote goes where the name was last sent, which for a marker written before scopes
-// existed is the project.
 func removedNote(id uuid.UUID, name string, e markerEntry, at time.Time) api.NoteInput {
 	return retired(id, name, e, at, "Removed from Claude Code memory on ")
 }
@@ -104,7 +101,6 @@ func (r *hookRunner) sendMemory(ctx context.Context, id uuid.UUID, marker map[st
 	return nil
 }
 
-// syncMemory sends one memory file the model just wrote and records it in the marker.
 func (r *hookRunner) syncMemory(ctx context.Context, id uuid.UUID, path string) {
 	raw, err := os.ReadFile(path)
 	if err != nil {
@@ -137,9 +133,6 @@ func (r *hookRunner) syncMemory(ctx context.Context, id uuid.UUID, path string) 
 	}
 }
 
-// walkMemory sends every memory file newer than the marker and a removed version
-// for every marker entry whose file is gone. It skips what the server refuses as
-// invalid and stops at any other failure.
 func (r *hookRunner) walkMemory(ctx context.Context, id uuid.UUID, cwd string) {
 	for _, dir := range r.memory.dirs(cwd) {
 		if err := r.walkMemoryDir(ctx, id, dir); err != nil {

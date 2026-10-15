@@ -62,9 +62,6 @@ type ImportReport struct {
 	Notice    string `json:"notice,omitempty"`
 }
 
-// ImportMaxDocs bounds one import, which runs in one transaction and holds
-// its row locks until the last doc; bellek import sends larger sets in
-// batches.
 const ImportMaxDocs = 200
 
 type Report struct {

@@ -24,7 +24,6 @@ func serving(t *testing.T, h http.HandlerFunc, opts ...client.Option) *client.Cl
 	return client.New(srv.URL, testKey, opts...)
 }
 
-// answering serves every request with one status and one body.
 func answering(t *testing.T, status int, body string) *client.Client {
 	t.Helper()
 	return serving(t, func(w http.ResponseWriter, _ *http.Request) {

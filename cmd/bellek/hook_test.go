@@ -70,7 +70,6 @@ func (f *hookFixture) run(t *testing.T, event string, in hookInput) {
 	require.NoError(t, f.r.run(f.ctx, event, in))
 }
 
-// session is the server's record of the session the hooks mapped claudeID to.
 func (f *hookFixture) session(t *testing.T, claudeID string) *fakeSession {
 	t.Helper()
 	id, ok := f.state.Load(claudeID)
@@ -809,14 +808,11 @@ func writeMemory(t *testing.T, dir, name, description, memoryType, modified, bod
 	return p
 }
 
-// notes lists what the hooks sent for one memory to the session's project,
-// oldest first, so the last is the version the server holds.
 func (f *hookFixture) notes(t *testing.T, kind api.Kind, key string) []api.NoteInput {
 	t.Helper()
 	return f.api.notesIn("", kind, key)
 }
 
-// globalNotes lists what the hooks sent for one memory to the personal scope.
 func (f *hookFixture) globalNotes(t *testing.T, kind api.Kind, key string) []api.NoteInput {
 	t.Helper()
 	return f.api.notesIn(api.GlobalProjectKey, kind, key)
@@ -1589,8 +1585,6 @@ func TestHookSessionEndSaysWhyItEnded(t *testing.T) {
 
 func TestHookRunsWithAGitOpsThatAnswersOnlyTheRemote(t *testing.T) {
 	f := newHookFixture(t)
-	// A future Claude Code, or a build where a git query was not wired, leaves
-	// fields nil. A panic is a non-zero exit, which the hook rule forbids.
 	f.r.gitOps = gitOps{remote: func(context.Context, string) string { return testRemote }}
 
 	for _, event := range hookEvents {

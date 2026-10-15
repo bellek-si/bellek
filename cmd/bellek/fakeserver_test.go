@@ -20,28 +20,21 @@ import (
 
 const fakeKey = api.KeyPrefix + "fake-test-key"
 
-// exportPage is how many nodes the server puts on one export page.
 const exportPage = 200
 
 var taskStatuses = []string{"todo", "inProgress", "blocked", "review", "done", "cancelled"}
 
-// fakeServer answers the routes the commands call the way the server does,
-// from what each test sets. Health takes no key; every other route wants
-// fakeKey.
 type fakeServer struct {
 	URL string
 
-	mu      sync.Mutex
-	health  api.Health
-	me      api.Me
-	doctor  api.DoctorReport
-	exports map[string][]*api.Node
-	// reports holds report markdown by project/kind/key.
-	reports map[string]string
-	// freeCap leaves out new docs once the workspace holds that many, with notice.
-	freeCap int
-	notice  string
-	// stored holds the imported docs by project, then kind/key.
+	mu       sync.Mutex
+	health   api.Health
+	me       api.Me
+	doctor   api.DoctorReport
+	exports  map[string][]*api.Node
+	reports  map[string]string
+	freeCap  int
+	notice   string
 	stored   map[string]map[string]api.ImportDoc
 	requests []string
 }
@@ -88,8 +81,6 @@ func serveFake(t *testing.T) *fakeServer {
 	return s
 }
 
-// mcpHandler serves a stand in for the server's MCP endpoint the way the
-// server does, stateless with JSON answers.
 func mcpHandler() http.Handler {
 	srv := mcp.NewServer(&mcp.Implementation{Name: "bellek", Version: "test"}, &mcp.ServerOptions{Instructions: "Search before you edit."})
 	srv.AddTool(&mcp.Tool{Name: "memory_search", Description: "Search the memory.", InputSchema: map[string]any{
@@ -128,7 +119,6 @@ func (s *fakeServer) serveMe(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, s.me)
 }
 
-// serveDoctor gives the counts to an admin only, because they cover the whole workspace.
 func (s *fakeServer) serveDoctor(w http.ResponseWriter, _ *http.Request) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -167,9 +157,6 @@ func (s *fakeServer) serveExport(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, snap)
 }
 
-// serveImport takes one batch in one transaction, as the server does: a
-// body over the request limit, a batch over the doc limit or one doc the
-// server cannot take refuses the whole batch.
 func (s *fakeServer) serveImport(w http.ResponseWriter, r *http.Request) {
 	raw, err := io.ReadAll(http.MaxBytesReader(w, r.Body, api.MaxRequestBytes))
 	if err != nil {
@@ -238,7 +225,6 @@ func (s *fakeServer) serveReport(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, api.Report{Markdown: md, GeneratedAt: time.Now().UTC()})
 }
 
-// tasks builds n exported tasks, oldest first.
 func tasks(n int) []*api.Node {
 	at := time.Date(2026, 9, 17, 10, 0, 0, 0, time.UTC)
 	out := make([]*api.Node, 0, n)

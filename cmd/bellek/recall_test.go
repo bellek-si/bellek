@@ -26,19 +26,15 @@ func (f *hookFixture) answer(t *testing.T, event string) string {
 	return answer["hookSpecificOutput"]["additionalContext"]
 }
 
-// taskRef names a todo task, the first of the project, the way the server does in what it answers.
 func taskRef(key string) api.Ref {
 	return api.Ref{Kind: api.KindTask, Key: key, Ref: "repo-1", Title: "Task " + key, Status: "todo"}
 }
 
-// focus makes the session hold the task, as a claim does on the server.
 func (f *hookFixture) focus(t *testing.T, claudeID string, task api.Ref) {
 	t.Helper()
 	f.session(t, claudeID).focus = &task
 }
 
-// signal leaves a signal from one session for another, unread until a prompt
-// of the receiver acknowledges it.
 func (f *hookFixture) signal(t *testing.T, from, to string, sig api.Signal) api.Signal {
 	t.Helper()
 	sender, receiver := f.session(t, from), f.session(t, to)

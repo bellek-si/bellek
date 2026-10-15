@@ -244,16 +244,12 @@ func (r *hookRunner) newSession(ctx context.Context, in hookInput) (*api.Session
 	return started, r.state.Save(in.SessionID, started.Session.ID)
 }
 
-// restart replaces a session the server has ended, as the idle sweep does to
-// a Claude Code session left open for a day.
 func (r *hookRunner) restart(ctx context.Context, in hookInput) (*api.SessionStartResult, error) {
 	r.state.Delete(in.SessionID)
 	r.state.DeleteRecall(in.SessionID)
 	return r.newSession(ctx, in)
 }
 
-// location is where the session runs, redacted like any capture before it
-// leaves the machine.
 // Without a remote the server resolves the project by path, so every worktree reports the main one.
 func (r *hookRunner) location(ctx context.Context, cwd string) api.SessionLocationInput {
 	loc := api.SessionLocationInput{
@@ -347,8 +343,6 @@ func (r *hookRunner) prompt(ctx context.Context, in hookInput) error {
 			got, err = r.api.Prompt(ctx, id, message, nil)
 		}
 		if client.IsCode(err, api.CodeUnauthorized) {
-			// A refused key records nothing more in this session, so the
-			// model is told once and later prompts stay quiet.
 			r.warn("prompt", "capture rejected: %v", err)
 			r.state.Delete(in.SessionID)
 			if r.cfg.Recalls("prompt") {
@@ -451,7 +445,6 @@ func (r *hookRunner) stop(ctx context.Context, in hookInput) error {
 	return nil
 }
 
-// Claude Code sends clear, logout, prompt_input_exit or other as the reason.
 func endSummary(reason string) string {
 	if reason == "" {
 		return "session ended by claude code"
@@ -521,9 +514,6 @@ func transcriptName(path string) string {
 	return cmp.Or(agentName, aiTitle, slug)
 }
 
-// bounded caps a git query, so a slow repository cannot eat the hook's budget.
-// A nil query answers with the zero value, which every caller already
-// reads as no answer, so a partly built gitOps cannot panic the hook.
 func bounded[T any](ctx context.Context, cwd string, query func(context.Context, string) T) T {
 	var zero T
 	if query == nil {
@@ -574,8 +564,6 @@ func (r *hookRunner) send(ctx context.Context, item spooled) error {
 	return nil
 }
 
-// drain drops an item the server refuses for good, so it never holds back the
-// items behind it.
 func (r *hookRunner) drain(ctx context.Context) {
 	send := func(item spooled) error {
 		err := r.send(ctx, item)
@@ -602,7 +590,6 @@ func (r *hookRunner) spool(item spooled, cause error) {
 	r.warn(item.Op, "capture spooled: %v", cause)
 }
 
-// A session is not found once its project is deleted.
 func sessionGone(err error) bool {
 	var e *client.Error
 	return errors.As(err, &e) && (e.Code == api.CodeSessionEnded || e.Code == api.CodeNotFound && e.Message == "session not found")

@@ -1,4 +1,3 @@
-# Go environment
 GO      ?= $(shell command -v go)
 GOARCH  ?= $(shell go env GOARCH)
 GOOS    ?= $(shell go env GOOS)
@@ -7,7 +6,6 @@ APPLICATION := bellek
 DIST_DIR    := dist
 BINARY      := $(DIST_DIR)/$(APPLICATION)-$(GOOS)-$(GOARCH)
 
-# Version from git tags
 VERSION ?= $(shell git describe --tags 2>/dev/null)
 VERSION := $(if $(strip $(VERSION)),$(VERSION),dev)
 
@@ -16,11 +14,8 @@ SHA256SUM := $(or $(shell command -v sha256sum),shasum -a 256)
 
 BUILD_FLAGS := -trimpath -ldflags '-s -w -X main.Version=$(VERSION)'
 
-# Claude Code home the plugin targets install into, one home at a time
 CLAUDE_CONFIG_DIR ?= $(HOME)/.claude
 
-# sudo is used for the copy alone and only when INSTALL_DIR is not writable, so a build
-# never writes anything as root.
 INSTALL_DIR ?= /usr/local/bin
 SUDO := $(shell test -w $(INSTALL_DIR) || echo sudo)
 
@@ -50,10 +45,6 @@ help:
 	@echo "  \033[36mCLAUDE_CONFIG_DIR\033[0m   $(CLAUDE_CONFIG_DIR)"
 	@echo ""
 
-# =============================================================================
-# Development
-# =============================================================================
-
 .PHONY: dep
 dep: ## Tidy and verify the Go modules
 	@$(GO) mod tidy
@@ -74,10 +65,6 @@ clean: ## Remove the build output
 
 .PHONY: ci
 ci: lint test ## Run every check the ci workflow runs
-
-# =============================================================================
-# Build and install
-# =============================================================================
 
 .PHONY: build
 build: ## Build bellek for the current platform into dist
@@ -112,10 +99,6 @@ plugin-update: ## Refresh the installed plugin from this checkout, plugin files 
 plugin-uninstall: ## Remove the plugin and the marketplace from CLAUDE_CONFIG_DIR
 	@CLAUDE_CONFIG_DIR=$(CLAUDE_CONFIG_DIR) claude plugin uninstall $(APPLICATION)@$(APPLICATION)
 	@CLAUDE_CONFIG_DIR=$(CLAUDE_CONFIG_DIR) claude plugin marketplace remove $(APPLICATION)
-
-# =============================================================================
-# Release
-# =============================================================================
 
 .PHONY: package
 package: build ## Pack bellek, README.md and LICENSE as dist/bellek-<os>-<arch>.tar.gz

@@ -72,7 +72,6 @@ func TestTouchedPathsFollowsSymlinkedRoots(t *testing.T) {
 	link := filepath.Join(t.TempDir(), "link")
 	require.NoError(t, os.Symlink(real, link))
 	roots := func() []string { return []string{real} }
-	// git prints the resolved root while Claude Code passes the path the user typed.
 	require.Equal(t, []string{"new.go"}, touchedPaths("Write", json.RawMessage(`{"file_path":"`+link+`/new.go"}`), "/elsewhere", nil, nil, roots))
 	require.Equal(t, []string{"new.go"}, touchedPaths("Write", json.RawMessage(`{"file_path":"`+real+`/new.go"}`), link, nil, nil, nil))
 }

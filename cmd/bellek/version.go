@@ -21,10 +21,8 @@ func init() {
 	rootCmd.AddCommand(versionCmd)
 }
 
-// buildVersion keeps the version the Makefile stamps. A go install build has
-// none, so it takes the module version Go records in the binary. A build of a
-// checkout records its git state, and the version Go derives from that often
-// names no release, so that build stays dev.
+// A build of a checkout records its git state, and the version Go derives from
+// that often names no release, so that build stays dev.
 func buildVersion(stamped string, read func() (*debug.BuildInfo, bool)) string {
 	if stamped != "dev" {
 		return stamped

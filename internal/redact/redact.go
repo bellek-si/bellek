@@ -1,4 +1,3 @@
-// Package redact removes secrets and private blocks from text before it leaves the machine.
 package redact
 
 import (
@@ -20,9 +19,7 @@ var bellekKeys = map[string]bool{
 
 func isBellekKey(name string) bool { return bellekKeys[strings.ToLower(name)] }
 
-// value is what an assignment sets: at least eight characters, bare or
-// quoted, with the closing quote optional so a value cut short is still
-// caught.
+// The closing quote is optional so a value cut short is still caught.
 const value = `(?:"(?:[^"\\\n]|\\.){8,}"?|'[^'\n]{8,}'?|[^\s"']{8,})`
 
 // The paired forms run before the open ended ones, so a closed marker or a
@@ -77,7 +74,6 @@ func (r rule) apply(s string) string {
 	return string(append(out, s[last:]...))
 }
 
-// Text applies every rule in order and caps the result at max bytes, never inside a rune.
 func Text(s string, max int) string {
 	for _, r := range rules {
 		s = r.apply(s)
