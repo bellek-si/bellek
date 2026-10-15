@@ -146,7 +146,7 @@ homebrew-formula: version-tagged ## Write dist/bellek.rb for VERSION from the ch
 	@arm=$$(awk '$$2 == "$(APPLICATION)-darwin-arm64.tar.gz" {print $$1}' $(DIST_DIR)/checksums.txt); \
 	intel=$$(awk '$$2 == "$(APPLICATION)-darwin-amd64.tar.gz" {print $$1}' $(DIST_DIR)/checksums.txt); \
 	test -n "$$arm" && test -n "$$intel" || { echo "checksums.txt has no darwin tarballs"; exit 1; }; \
-	sed -e 's/@TAG@/$(VERSION)/g' -e 's/@VERSION@/$(VERSION:v%=%)/g' -e "s/@SHA256_DARWIN_ARM64@/$$arm/" -e "s/@SHA256_DARWIN_AMD64@/$$intel/" \
+	sed -e 's/@TAG@/$(VERSION)/g' -e "s/@SHA256_DARWIN_ARM64@/$$arm/" -e "s/@SHA256_DARWIN_AMD64@/$$intel/" \
 		packaging/homebrew/$(APPLICATION).rb.tmpl > $(FORMULA)
 	@echo "Formula written: $(FORMULA)"
 
