@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "bellek": {
+      "command": "bellek",
+      "args": ["mcp"]
+    }
+  }
+}
