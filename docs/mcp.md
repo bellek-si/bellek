@@ -17,7 +17,7 @@ The Bellek plugin installs the server together with the hooks, see [hooks.md](ho
 }
 ```
 
-The file holds no key, because a project's `.mcp.json` is often committed. `bellek mcp` reads `BELLEK_URL` and `BELLEK_TOKEN`, an API key, from the environment only, usually the `env` block of Claude Code's settings, see [the README](../README.md#2-add-your-api-key).
+The file holds no key, because a project's `.mcp.json` is often committed. `bellek mcp` reads `BELLEK_TOKEN`, an API key, and `BELLEK_URL`, default `https://bellek.si`, from the environment only, usually the `env` block of Claude Code's settings, see [the README](../README.md#2-add-your-api-key).
 
 `bellek mcp` connects to `BELLEK_URL/mcp` with the key, mirrors the tools and the instructions the server offers and forwards every call, so new tools and instructions need no new client. It sends the key to the host of `BELLEK_URL` only, never to a host a redirect names. It logs to stderr, so stdout stays clean for the protocol: at `info`, one `mcp call` line per forwarded call, with the tool name, `durationMs` and the error when there is one. Claude Code shows that stderr only in its debug log, so run `claude --debug` to read it.
 
@@ -28,7 +28,7 @@ The bridge fills `cwd`, `repoRemote`, `repoRoot` and `branch`, each one only whe
 `POST /mcp` on the API port, with an API key as for the API. A key acts as its user in its workspace. Call it directly when you do not want the stdio bridge. It runs in stateless JSON response mode: one JSON body per request, no event streams, no `initialize` needed. Send `Accept: application/json, text/event-stream`, or the request is refused with 400. Nothing fills `cwd`, `repoRemote`, `repoRoot` or `branch` here, so pass `projectKey` or `repoRemote` yourself. At `info` the server logs one `mcp call` line per tool call, with the error code when the call fails.
 
 ```bash
-curl -s -X POST "$BELLEK_URL/mcp" \
+curl -s -X POST "https://bellek.si/mcp" \
   -H @<(printf 'Authorization: Bearer %s\n' "$BELLEK_TOKEN") \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json, text/event-stream' \

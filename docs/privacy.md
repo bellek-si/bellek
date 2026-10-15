@@ -1,6 +1,6 @@
 # What leaves your machine
 
-`bellek` sends data only to `BELLEK_URL`, with your key in the `Authorization` header and nowhere else. A redirect to another host does not carry the key. Every text field below goes through `internal/redact` first, see [hooks.md](hooks.md#what-is-captured-and-what-is-not) for what it removes, and anything between `<private>` and `</private>` never leaves.
+`bellek` sends data only to `BELLEK_URL`, `https://bellek.si` unless you set it, with your key in the `Authorization` header and nowhere else. A redirect to another host does not carry the key. A plain `http://` address on another machine would send the key unencrypted, so every command warns about it on stderr. Every text field below goes through `internal/redact` first, see [hooks.md](hooks.md#what-is-captured-and-what-is-not) for what it removes, and anything between `<private>` and `</private>` never leaves.
 
 ## The hooks
 

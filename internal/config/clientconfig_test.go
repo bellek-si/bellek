@@ -23,7 +23,7 @@ func TestLoadDefaults(t *testing.T) {
 	t.Setenv("BELLEK_TOKEN", testToken)
 	cfg, err := Load()
 	require.NoError(t, err)
-	require.Equal(t, "http://localhost:8080", cfg.ServerURL)
+	require.Equal(t, "https://bellek.si", cfg.ServerURL)
 	require.Equal(t, testToken, cfg.Token)
 	require.Equal(t, "info", cfg.LogLevel)
 	require.Equal(t, []string{"prompts", "files", "progress", "memory"}, cfg.Capture)
@@ -133,7 +133,7 @@ func TestLoadReadsTheEnvironmentOnly(t *testing.T) {
 	t.Setenv("BELLEK_TOKEN", testToken)
 	cfg, err := Load()
 	require.NoError(t, err)
-	require.Equal(t, "http://localhost:8080", cfg.ServerURL, "the URL comes from the environment too")
+	require.Equal(t, DefaultServerURL, cfg.ServerURL, "the URL comes from the environment too")
 }
 
 func TestLoadRefusesATokenThatIsNotAKey(t *testing.T) {

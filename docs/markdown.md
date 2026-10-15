@@ -80,7 +80,7 @@ bellek doctor
 ```
 
 ```text
-server: ok (http://localhost:8080)
+server: ok (https://bellek.si)
 versions: client v0.1.0, server v1.3.0
 key: laptop (bk_Xq3vL9aZ)
 user: Ada Lovelace <ada@example.com>

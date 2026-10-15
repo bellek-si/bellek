@@ -5,7 +5,7 @@ The hooks start and end a Bellek session, record what happens in it, write a che
 ## Setup
 
 1. Put `bellek` on your PATH, see [the quick start](../README.md#1-install-bellek), or run `make install` in a checkout, which builds it and copies it to `INSTALL_DIR`, default `/usr/local/bin`.
-2. Create an API key on the API keys page under Settings at [bellek.si](https://bellek.si) and paste the `env` block it shows into `~/.claude/settings.json`, or into a repository's untracked `.claude/settings.local.json` for a key of another workspace, as the [README](../README.md#2-add-your-api-key) shows. The hooks and `bellek mcp` read `BELLEK_URL` and `BELLEK_TOKEN` from the environment only, never from a `.env` file. Without `BELLEK_TOKEN` they stop with "BELLEK_TOKEN is required" on stderr, with a value that does not start with `bk_` they stop with "BELLEK_TOKEN must be an API key, which starts with bk_; create one on the settings page", and without `BELLEK_URL` they talk to `http://localhost:8080`.
+2. Create an API key on the API keys page under Settings at [bellek.si](https://bellek.si) and paste the `env` block it shows into `~/.claude/settings.json`, or into a repository's untracked `.claude/settings.local.json` for a key of another workspace, as the [README](../README.md#2-add-your-api-key) shows. The hooks and `bellek mcp` read `BELLEK_URL` and `BELLEK_TOKEN` from the environment only, never from a `.env` file. Without `BELLEK_TOKEN` they stop with "BELLEK_TOKEN is required" on stderr, with a value that does not start with `bk_` they stop with "BELLEK_TOKEN must be an API key, which starts with bk_; create one on the settings page", and without `BELLEK_URL` they talk to `https://bellek.si`.
 3. Install the plugin, or add the hook block by hand.
 
 ### The plugin
@@ -189,7 +189,7 @@ To backfill from another machine, copy its memory directory and run `bellek impo
 Start Claude Code in a project, then list its active sessions:
 
 ```bash
-curl -s "$BELLEK_URL/v1/projects/<key>/sessions?status=active" -H @<(printf 'Authorization: Bearer %s\n' "$BELLEK_TOKEN")
+curl -s "https://bellek.si/v1/projects/<key>/sessions?status=active" -H @<(printf 'Authorization: Bearer %s\n' "$BELLEK_TOKEN")
 ```
 
 A `claudeCode` session with your hostname should be listed, with `intent` set after the first prompt. Its page in the web UI, `/p/<key>/s/<session key>`, shows the turns and files.

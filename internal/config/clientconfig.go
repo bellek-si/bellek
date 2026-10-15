@@ -25,7 +25,7 @@ type Config struct {
 }
 
 const (
-	DefaultServerURL     = "http://localhost:8080"
+	DefaultServerURL     = "https://bellek.si"
 	DefaultCapture       = "prompts,files,progress,memory"
 	DefaultCaptureIgnore = ".env*,*.pem,*.key,*lock*,id_rsa*,id_dsa*,id_ecdsa*,id_ed25519*,.netrc,.npmrc,.pypirc,credentials,*credentials.json,.git-credentials"
 	DefaultRecall        = "briefing,prompt,files"

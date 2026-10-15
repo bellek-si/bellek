@@ -46,7 +46,6 @@ Sign in at [bellek.si](https://bellek.si) and create a key on the API keys page 
 ```json
 {
   "env": {
-    "BELLEK_URL": "https://bellek.si",
     "BELLEK_TOKEN": "bk_..."
   }
 }
@@ -90,7 +89,6 @@ Commands print their output on stdout and log on stderr. [docs/markdown.md](docs
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `BELLEK_URL` | `http://localhost:8080` | The server, `https://bellek.si` for the hosted service. Plain `http://` to another machine sends the key unencrypted, and every command warns about it on stderr |
 | `BELLEK_TOKEN` | none, required | An API key, which starts with `bk_` |
 | `BELLEK_CAPTURE` | `prompts,files,progress,memory` | What the hooks record. Empty turns these four off; session start, location, the checkpoint note and session end still run, see [docs/privacy.md](docs/privacy.md) |
 | `BELLEK_CAPTURE_IGNORE` | `.env*,*.pem,*.key,*lock*,id_rsa*,id_dsa*,id_ecdsa*,id_ed25519*,.netrc,.npmrc,.pypirc,credentials,*credentials.json,.git-credentials` | Path globs the hooks never record. Empty ignores nothing |
