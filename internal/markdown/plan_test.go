@@ -7,21 +7,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const samplePlan = `# Bellek Phase 9 Implementation Plan
+const samplePlan = `# Widgets Implementation Plan
 
 **Goal:** Ship it.
 
 ---
 
-### Task 1: Keyword lookup on the store
+### Task 1: Search widgets by name
 
 **Files:**
-- Modify: internal/store/store.go
+- Modify: internal/widgets/widgets.go
 
-- [x] **Step 1: Add the contract test**
+- [x] **Step 1: Add the test**
 - [x] **Step 2: Implement**
 
-### Task 2: Notes and link on write!
+### Task 2: Widget notes and links!
 
 Some prose about notes.
 
@@ -59,14 +59,14 @@ func TestIsPlan(t *testing.T) {
 func TestParsePlan(t *testing.T) {
 	tasks := ParsePlan([]byte(samplePlan))
 	require.Len(t, tasks, 4)
-	require.Equal(t, "keyword-lookup-on-the-store", tasks[0].Key)
-	require.Equal(t, "Keyword lookup on the store", tasks[0].Title)
+	require.Equal(t, "search-widgets-by-name", tasks[0].Key)
+	require.Equal(t, "Search widgets by name", tasks[0].Title)
 	require.Equal(t, "done", tasks[0].Status)
 	require.Equal(t, 2, tasks[0].Steps)
 	require.Equal(t, 2, tasks[0].Done)
-	require.Contains(t, tasks[0].Body, "internal/store/store.go")
+	require.Contains(t, tasks[0].Body, "internal/widgets/widgets.go")
 
-	require.Equal(t, "notes-and-link-on-write", tasks[1].Key)
+	require.Equal(t, "widget-notes-and-links", tasks[1].Key)
 	require.Equal(t, "inProgress", tasks[1].Status)
 	require.Equal(t, 3, tasks[1].Steps)
 	require.Equal(t, 1, tasks[1].Done)

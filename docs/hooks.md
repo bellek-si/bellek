@@ -16,7 +16,7 @@ The hooks start and end a Bellek session, record what happens in it, write a che
 make plugin-install
 ```
 
-That registers the checkout as the marketplace `bellek` by its absolute path and installs `bellek@bellek` at user scope into one Claude Code home, `CLAUDE_CONFIG_DIR`, default `~/.claude`. For another home, run `make plugin-install CLAUDE_CONFIG_DIR=$HOME/.claude-personal`. Claude Code copies the plugin files on install, so after a change under `plugin/` run `make plugin-update`, which refreshes the marketplace and reinstalls. A new binary needs only `make install` or a newer release binary. `make plugin-uninstall` removes the plugin and the marketplace. Because the marketplace points at the path, moving or renaming the checkout breaks it: run `make plugin-uninstall` and `make plugin-install` from the new place.
+That registers the checkout as the marketplace `bellek` by its absolute path and installs `bellek@bellek` at user scope into one Claude Code home, `CLAUDE_CONFIG_DIR`, default `~/.claude`. For another home, run `make plugin-install CLAUDE_CONFIG_DIR=$HOME/.claude-work`. Claude Code copies the plugin files on install, so after a change under `plugin/` run `make plugin-update`, which refreshes the marketplace and reinstalls. A new binary needs only `make install` or a newer release binary. `make plugin-uninstall` removes the plugin and the marketplace. Because the marketplace points at the path, moving or renaming the checkout breaks it: run `make plugin-uninstall` and `make plugin-install` from the new place.
 
 Without a checkout, add the marketplace from GitHub:
 

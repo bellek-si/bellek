@@ -849,7 +849,7 @@ func TestHookSyncsAMemoryWriteInTheTurn(t *testing.T) {
 	require.Len(t, versions, 2, "an edit sends the memory again")
 	require.Equal(t, "Always run pnpm, and pnpm dlx.", versions[1].Body)
 
-	proj := writeMemory(t, dir, "repo-layout", "Where things live", "project", "2026-09-17T10:00:00.000Z", "Services in internal/service.")
+	proj := writeMemory(t, dir, "repo-layout", "Where things live", "project", "2026-09-17T10:00:00.000Z", "Widgets live in internal/widgets.")
 	f.run(t, "tool-use", hookInput{SessionID: "c", Cwd: "/repo", ToolName: "Write", ToolInput: json.RawMessage(`{"file_path":"` + proj + `"}`)})
 	require.Len(t, f.notes(t, api.KindNote, "repo-layout"), 1, "a project memory is a note")
 

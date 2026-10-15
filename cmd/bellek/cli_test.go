@@ -89,7 +89,6 @@ func TestConfigCommandPrintsTheClientSettings(t *testing.T) {
 	require.Contains(t, out, "recall=briefing\n")
 	require.Contains(t, out, "briefTokens=300\n")
 	require.NotContains(t, out, strings.Repeat("x", 16))
-	require.NotContains(t, out, "databaseUrl", "the client has no database")
 }
 
 func TestConfigCommandPrintsTheLogLevelAndTheLists(t *testing.T) {

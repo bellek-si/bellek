@@ -117,7 +117,7 @@ func TestReadDocsImportsClaudeMemoryFiles(t *testing.T) {
 	dir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "MEMORY.md"), []byte("- [x](x.md)\n"), 0o644))
 	writeMemory(t, dir, "prefers-pnpm", "Use pnpm", "feedback", "2026-09-17T10:00:00.000Z", "Always pnpm.")
-	writeMemory(t, dir, "layout", "Where things live", "project", "2026-09-17T10:00:00.000Z", "internal/service.")
+	writeMemory(t, dir, "layout", "Where things live", "project", "2026-09-17T10:00:00.000Z", "internal/widgets.")
 	docs, err := readDocs(dir)
 	require.NoError(t, err)
 	require.Len(t, docs, 2)
@@ -130,7 +130,7 @@ func TestReadDocsImportsClaudeMemoryFiles(t *testing.T) {
 	require.Equal(t, []string{"memory", "feedback"}, byKey["prefers-pnpm"].Tags)
 	require.Equal(t, "claudeMemory", byKey["prefers-pnpm"].Props["source"])
 	require.Equal(t, "note", byKey["layout"].Kind)
-	require.Equal(t, "internal/service.", byKey["layout"].Body)
+	require.Equal(t, "internal/widgets.", byKey["layout"].Body)
 }
 
 func TestReadDocsImportsOneMemoryFile(t *testing.T) {
@@ -164,7 +164,7 @@ func TestReadDocsMixesMemoryAndBellekFiles(t *testing.T) {
 func TestReadDocsRefusesAMemoryFileWithABadTimestamp(t *testing.T) {
 	dir := t.TempDir()
 	writeMemory(t, dir, "prefers-pnpm", "Use pnpm", "feedback", "2026-09-17T10:00:00.000Z", "Always pnpm.")
-	writeMemory(t, dir, "layout", "Where things live", "project", "yesterday", "internal/service.")
+	writeMemory(t, dir, "layout", "Where things live", "project", "yesterday", "internal/widgets.")
 
 	_, err := readDocs(dir)
 	require.ErrorContains(t, err, "layout.md", "a memory whose timestamp is wrong names itself")

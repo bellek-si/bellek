@@ -2,7 +2,7 @@
 
 Shared memory for Claude Code sessions. Bellek keeps the tasks, decisions and notes your coding sessions share. A new session starts with a briefing of where the work stands, two sessions never work on the same task, and a session that stops leaves a handoff for the next one.
 
-This repository is the part of Bellek that runs on your machine:
+This repository holds what runs on your machine:
 
 - `bellek`, the command the hooks and the MCP server run, plus `doctor`, `export` and `import`
 - the Claude Code plugin: eight hooks, the Bellek MCP tools and a skill that tells the model when to read and write
