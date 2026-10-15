@@ -1,6 +1,6 @@
 # What leaves your machine
 
-`bellek` sends data only to `BELLEK_URL`, `https://bellek.si` unless you set it, with your key in the `Authorization` header and nowhere else. A redirect to another host does not carry the key. A plain `http://` address on another machine would send the key unencrypted, so every command warns about it on stderr. Every text field below goes through `internal/redact` first, see [hooks.md](hooks.md#what-is-captured-and-what-is-not) for what it removes, and anything between `<private>` and `</private>` never leaves.
+`bellek` sends data only to `BELLEK_URL`, `https://bellek.si` unless you set it, with your key in the `Authorization` header and nowhere else. A redirect to another host does not carry the key. A plain `http://` address on another machine would send the key unencrypted, so every command warns about it on stderr. Every text field the hooks send goes through `internal/redact` first, see [hooks.md](hooks.md#what-is-captured-and-what-is-not) for what it removes, and anything between `<private>` and `</private>` never leaves.
 
 ## The hooks
 
@@ -25,11 +25,11 @@ Never sent: the contents of any file other than a Claude Code memory file, tool 
 
 ## `bellek mcp`
 
-The MCP bridge forwards the tool calls the model makes to `/mcp`, with the arguments the model chose. It adds the working directory, the git remote, the main worktree root and the branch to a call when the tool takes them and the model left them out.
+The MCP bridge forwards the tool calls the model makes to `/mcp`, with the arguments the model chose, as the model wrote them. It adds the working directory, the git remote, the main worktree root and the branch to a call when the tool takes them and the model left them out, and those four go through `internal/redact` like the location a hook sends. A git remote never carries its credentials, even one the model wrote.
 
 ## The other commands
 
-`bellek doctor` reads `/v1/health`, `/v1/me` and, for an admin, `/v1/doctor`. `bellek export` reads a project and writes it to your disk. `bellek import` sends the markdown files you name. None of them sends anything else.
+`bellek doctor` reads `/v1/health`, `/v1/me` and, for an admin, `/v1/doctor`. `bellek export` reads a project and writes it to your disk. `bellek import` sends the markdown files you name: a Claude Code memory file goes through `internal/redact` as in memory sync, and a plan or Bellek markdown file goes as written. None of them sends anything else.
 
 ## Who reads it
 

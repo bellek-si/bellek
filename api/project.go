@@ -30,13 +30,13 @@ type Snapshot struct {
 }
 
 type ImportLink struct {
-	Type string `json:"type"`
-	To   string `json:"to"`
-	Kind string `json:"kind,omitempty"`
+	Type EdgeType `json:"type"`
+	To   string   `json:"to"`
+	Kind Kind     `json:"kind,omitempty"`
 }
 
 type ImportDoc struct {
-	Kind   string         `json:"kind"`
+	Kind   Kind           `json:"kind"`
 	Key    string         `json:"key"`
 	Title  string         `json:"title"`
 	Status string         `json:"status,omitempty"`
@@ -46,7 +46,7 @@ type ImportDoc struct {
 	Links  []ImportLink   `json:"links,omitempty"`
 	// Visibility is private or shared on a note or decision. A new one without it gets the
 	// default of a note write, and an existing one keeps its own.
-	Visibility string `json:"visibility,omitempty"`
+	Visibility Visibility `json:"visibility,omitempty"`
 }
 
 type ImportInput struct {
@@ -78,6 +78,15 @@ const (
 
 func (r Role) Valid() bool { return r == RoleAdmin || r == RoleMember }
 
+type WorkspaceKind string
+
+const (
+	WorkspacePersonal     WorkspaceKind = "personal"
+	WorkspaceOrganization WorkspaceKind = "organization"
+)
+
+func (k WorkspaceKind) Valid() bool { return k == WorkspacePersonal || k == WorkspaceOrganization }
+
 type Me struct {
 	Key       Key       `json:"key"`
 	User      User      `json:"user"`
@@ -99,11 +108,11 @@ type User struct {
 }
 
 type Workspace struct {
-	ID   uuid.UUID `json:"id"`
-	Key  string    `json:"key"`
-	Name string    `json:"name"`
-	Kind string    `json:"kind"`
-	Role Role      `json:"role"`
+	ID   uuid.UUID     `json:"id"`
+	Key  string        `json:"key"`
+	Name string        `json:"name"`
+	Kind WorkspaceKind `json:"kind"`
+	Role Role          `json:"role"`
 }
 
 // RetentionTrigger is the event count in one project that schedules the

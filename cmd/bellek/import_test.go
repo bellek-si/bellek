@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/bellek-si/bellek/api"
 	"github.com/stretchr/testify/require"
@@ -46,10 +45,6 @@ func writeDocs(t *testing.T, n int, doc func(i int) string) string {
 		require.NoError(t, os.WriteFile(filepath.Join(dir, fmt.Sprintf("d%03d.md", i)), []byte(doc(i)), 0o600))
 	}
 	return dir
-}
-
-func TestImportTimeoutIsOneMinute(t *testing.T) {
-	require.Equal(t, time.Minute, importTimeout)
 }
 
 func TestImportCommandBatchesPassTheServersBodyLimit(t *testing.T) {

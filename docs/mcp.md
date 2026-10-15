@@ -25,7 +25,7 @@ The bridge fills `cwd`, `repoRemote`, `repoRoot` and `branch`, each one only whe
 
 ## HTTP
 
-`POST /mcp` on the API port, with an API key as for the API. A key acts as its user in its workspace. Call it directly when you do not want the stdio bridge. It runs in stateless JSON response mode: one JSON body per request, no event streams, no `initialize` needed. Send `Accept: application/json, text/event-stream`, or the request is refused with 400. Nothing fills `cwd`, `repoRemote`, `repoRoot` or `branch` here, so pass `projectKey` or `repoRemote` yourself. At `info` the server logs one `mcp call` line per tool call, with the error code when the call fails.
+`POST https://bellek.si/mcp` takes an API key, as the API does. A key acts as its user in its workspace. Call it directly when you do not want the stdio bridge. It runs in stateless JSON response mode: one JSON body per request, no event streams, no `initialize` needed. Send `Accept: application/json, text/event-stream`, or the request is refused with 400. Nothing fills `cwd`, `repoRemote`, `repoRoot` or `branch` here, so pass `projectKey` or `repoRemote` yourself.
 
 ```bash
 curl -s -X POST "https://bellek.si/mcp" \

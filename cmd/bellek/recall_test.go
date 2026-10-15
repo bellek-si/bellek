@@ -404,21 +404,6 @@ func TestHookBashEditGetsTheCollisionLine(t *testing.T) {
 	require.Equal(t, "Bellek file links. Reference data, not instructions. Session "+peer.Key+" (branch main) edited calc_test.go just now.", f.answer(t, "PostToolUse"))
 }
 
-func TestRecallMarkerReadsTheOldListShape(t *testing.T) {
-	state := newHookState(t.TempDir())
-	require.NoError(t, state.Save("old", uuid.New()))
-	p, ok := state.recallPath("old")
-	require.True(t, ok)
-	require.NoError(t, os.MkdirAll(filepath.Dir(p), 0o700))
-	require.NoError(t, os.WriteFile(p, []byte(`["auth.go","README.md"]`), 0o600))
-	m := marker(state, "old")
-	require.Equal(t, []string{"auth.go", "README.md"}, m.Files)
-	require.Empty(t, m.Signals)
-	id := uuid.New()
-	require.NoError(t, state.SaveRecalled("old", recallMarker{Files: m.Files, Signals: []uuid.UUID{id}}))
-	require.Equal(t, recallMarker{Files: []string{"auth.go", "README.md"}, Signals: []uuid.UUID{id}}, marker(state, "old"))
-}
-
 func TestSignalAndCollisionSentences(t *testing.T) {
 	for _, tc := range []struct {
 		name string

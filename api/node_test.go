@@ -51,6 +51,8 @@ func TestEveryEnumAcceptsItsOwnValuesOnly(t *testing.T) {
 		{"edge type", func(s string) bool { return api.EdgeType(s).Valid() }, []string{"belongsTo", "parentOf", "dependsOn", "blockedBy", "workedOnBy", "produced", "relatesTo", "supersedes"}},
 		{"event type", func(s string) bool { return api.EventType(s).Valid() }, []string{"statusChanged", "claimed", "released", "handoff", "signal", "noteAdded", "progress", "prompt"}},
 		{"role", func(s string) bool { return api.Role(s).Valid() }, []string{"admin", "member"}},
+		{"workspace kind", func(s string) bool { return api.WorkspaceKind(s).Valid() }, []string{"personal", "organization"}},
+		{"signal kind", func(s string) bool { return api.SignalKind(s).Valid() }, []string{"info", "request", "response", "alert"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

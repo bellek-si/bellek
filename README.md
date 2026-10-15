@@ -60,7 +60,7 @@ claude plugin marketplace add bellek-si/bellek
 claude plugin install bellek@bellek --scope user
 ```
 
-Start Claude Code in a git repository: each session starts with the Bellek briefing in context. To check the setup from a shell, export the same two variables and run:
+Start Claude Code in a git repository: each session starts with the Bellek briefing in context. To check the setup from a shell, export `BELLEK_TOKEN` and run:
 
 ```bash
 bellek doctor

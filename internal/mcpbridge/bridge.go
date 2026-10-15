@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/bellek-si/bellek/api"
+	"github.com/bellek-si/bellek/internal/bearer"
 	"github.com/bellek-si/bellek/internal/gitinfo"
+	"github.com/bellek-si/bellek/internal/redact"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"go.uber.org/zap"
 )
@@ -36,9 +37,9 @@ func LocalsFrom(cwd string) Locals {
 }
 
 func localsAt(ctx context.Context, cwd string) Locals {
-	l := Locals{Cwd: cwd, RepoRemote: gitinfo.Remote(ctx, cwd), Branch: gitinfo.Branch(ctx, cwd)}
+	l := Locals{Cwd: redact.Text(cwd, 0), RepoRemote: redact.Text(gitinfo.Remote(ctx, cwd), 0), Branch: redact.Text(gitinfo.Branch(ctx, cwd), 0)}
 	if roots := gitinfo.Worktrees(ctx, cwd); len(roots) > 0 {
-		l.RepoRoot = roots[0]
+		l.RepoRoot = redact.Text(roots[0], 0)
 	}
 	return l
 }
@@ -61,29 +62,10 @@ func (l Locals) values() map[string]string {
 	return values
 }
 
-type bearerTransport struct {
-	token string
-	host  string
-	next  http.RoundTripper
-}
-
-func (b bearerTransport) RoundTrip(r *http.Request) (*http.Response, error) {
-	if r.URL.Host != b.host {
-		return b.next.RoundTrip(r)
-	}
-	clone := r.Clone(r.Context())
-	clone.Header.Set("Authorization", "Bearer "+b.token)
-	return b.next.RoundTrip(clone)
-}
-
 func transport(baseURL, token string) *mcp.StreamableClientTransport {
-	var host string
-	if u, err := url.Parse(baseURL); err == nil {
-		host = u.Host
-	}
 	return &mcp.StreamableClientTransport{
 		Endpoint:             baseURL + "/mcp",
-		HTTPClient:           &http.Client{Transport: bearerTransport{token: token, host: host, next: http.DefaultTransport}},
+		HTTPClient:           &http.Client{Transport: bearer.New(baseURL, token, http.DefaultTransport)},
 		DisableStandaloneSSE: true,
 	}
 }
@@ -168,6 +150,9 @@ func fill(schema any, raw json.RawMessage, locals Locals, locate func(cwd string
 			continue
 		}
 		args[key] = value
+	}
+	if remote, ok := args["repoRemote"].(string); ok {
+		args["repoRemote"] = api.RemoteWithoutCredentials(remote)
 	}
 	return args, nil
 }

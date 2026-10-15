@@ -22,7 +22,7 @@ Read [CLAUDE.md](CLAUDE.md) for the rules the code follows. The ones people trip
 
 - `bellek mcp` speaks the protocol on stdout and a hook prints at most one JSON answer there. Logs go to stderr.
 - A hook exits zero whatever happens at runtime, so a missing server never blocks Claude Code.
-- Text a hook sends goes through `internal/redact` first.
+- Text a hook sends, and the location the MCP bridge adds, goes through `internal/redact` first.
 
 ## Pull requests
 

@@ -2080,7 +2080,7 @@ func TestHookMemoryWalkMovesAFeedbackMemoryToGlobalOnce(t *testing.T) {
 	e := marker["prefers-pnpm"]
 	e.Scope = ""
 	marker["prefers-pnpm"] = e
-	require.NoError(t, f.state.SaveMarker(dir, marker), "a marker from before scopes, when the memory went to the project")
+	require.NoError(t, f.state.SaveMarker(dir, marker), "a marker entry with no scope, which means the project")
 
 	f.run(t, "session-start", hookInput{SessionID: "d", Cwd: "/repo"})
 	old := f.notes(t, api.KindDecision, "prefers-pnpm")

@@ -19,7 +19,7 @@ type Session struct {
 	ID        uuid.UUID      `json:"id"`
 	Key       string         `json:"key"`
 	ProjectID uuid.UUID      `json:"projectId"`
-	Status    string         `json:"status"`
+	Status    SessionStatus  `json:"status"`
 	Props     map[string]any `json:"props"`
 }
 
@@ -52,14 +52,31 @@ type PromptInput struct {
 	AckSignals []uuid.UUID `json:"ackSignals,omitempty"`
 }
 
+type SignalKind string
+
+const (
+	SignalInfo     SignalKind = "info"
+	SignalRequest  SignalKind = "request"
+	SignalResponse SignalKind = "response"
+	SignalAlert    SignalKind = "alert"
+)
+
+func (k SignalKind) Valid() bool {
+	switch k {
+	case SignalInfo, SignalRequest, SignalResponse, SignalAlert:
+		return true
+	}
+	return false
+}
+
 type Signal struct {
-	ID             uuid.UUID `json:"id"`
-	FromSessionKey string    `json:"fromSessionKey"`
-	FromFocusKey   string    `json:"fromFocusKey"`
-	FromFocus      string    `json:"fromFocus,omitempty"`
-	Kind           string    `json:"kind"`
-	ThreadID       string    `json:"threadId"`
-	Message        string    `json:"message"`
+	ID             uuid.UUID  `json:"id"`
+	FromSessionKey string     `json:"fromSessionKey"`
+	FromFocusKey   string     `json:"fromFocusKey"`
+	FromFocus      string     `json:"fromFocus,omitempty"`
+	Kind           SignalKind `json:"kind"`
+	ThreadID       string     `json:"threadId"`
+	Message        string     `json:"message"`
 }
 
 type PromptResult struct {
@@ -90,6 +107,10 @@ type Artifact struct {
 	Title    string       `json:"title"`
 	Links    []Ref        `json:"links"`
 	Sessions []SessionRef `json:"sessions"`
+}
+
+type ArtifactsResult struct {
+	Items []Artifact `json:"items"`
 }
 
 // ProgressInput carries a turn's closing message and, when it changed, the name the

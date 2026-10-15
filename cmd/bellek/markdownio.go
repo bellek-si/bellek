@@ -97,7 +97,7 @@ func readDocs(path string) ([]api.ImportDoc, error) {
 		}
 		if markdown.IsPlan(b) {
 			for _, t := range markdown.ParsePlan(b) {
-				docs = append(docs, api.ImportDoc{Kind: "task", Key: t.Key, Title: t.Title, Status: t.Status, Body: t.Body})
+				docs = append(docs, api.ImportDoc{Kind: api.KindTask, Key: t.Key, Title: t.Title, Status: t.Status, Body: t.Body})
 			}
 			continue
 		}
@@ -114,12 +114,13 @@ func readDocs(path string) ([]api.ImportDoc, error) {
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", f, err)
 		}
-		if d.Kind == "session" || d.Kind == "artifact" {
+		kind := api.Kind(d.Kind)
+		if kind == api.KindSession || kind == api.KindArtifact {
 			continue
 		}
-		doc := api.ImportDoc{Kind: d.Kind, Key: d.Key, Title: d.Title, Status: d.Status, Body: d.Body, Tags: d.Tags, Props: d.Props, Visibility: d.Visibility}
+		doc := api.ImportDoc{Kind: kind, Key: d.Key, Title: d.Title, Status: d.Status, Body: d.Body, Tags: d.Tags, Props: d.Props, Visibility: api.Visibility(d.Visibility)}
 		for _, l := range d.Links {
-			doc.Links = append(doc.Links, api.ImportLink{Type: l.Type, To: l.To, Kind: l.Kind})
+			doc.Links = append(doc.Links, api.ImportLink{Type: api.EdgeType(l.Type), To: l.To, Kind: api.Kind(l.Kind)})
 		}
 		docs = append(docs, doc)
 	}

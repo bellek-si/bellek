@@ -51,7 +51,7 @@ type BriefingArgs struct {
 type GetArgs struct {
 	ScopeArgs
 	Key   string `json:"key" jsonschema:"node key, or a task id such as widgets-12"`
-	Kind  string `json:"kind,omitempty" jsonschema:"task, note, decision, session or project, default task"`
+	Kind  Kind   `json:"kind,omitempty" jsonschema:"task, note, decision, session or project, default task"`
 	Depth int    `json:"depth,omitempty" jsonschema:"neighbor depth 1 to 3, default 1"`
 	AsOf  string `json:"asOf,omitempty" jsonschema:"RFC3339 time to rebuild task status as of"`
 }
@@ -69,7 +69,7 @@ type SearchArgs struct {
 type NoteArgs struct {
 	SessionArgs
 	Key         string         `json:"key,omitempty" jsonschema:"stable key, generated from the title when empty"`
-	Kind        string         `json:"kind,omitempty" jsonschema:"note or decision, default note"`
+	Kind        Kind           `json:"kind,omitempty" jsonschema:"note or decision, default note"`
 	Title       string         `json:"title" jsonschema:"short title"`
 	Body        string         `json:"body,omitempty" jsonschema:"markdown body"`
 	Tags        []string       `json:"tags,omitempty"`
@@ -77,15 +77,15 @@ type NoteArgs struct {
 	RelatedKey  string         `json:"relatedKey,omitempty" jsonschema:"task id, task key or note key this note is about"`
 	BaseVersion int            `json:"baseVersion,omitempty" jsonschema:"version this edit was based on, refused with conflict when the latest moved on; leave empty"`
 	ProjectKey  string         `json:"projectKey,omitempty" jsonschema:"global for your own rule in every repository, team-<team key> or org to propose a rule to a team or the whole org with the tag proposed (an admin writes it outright); leave empty for this project"`
-	Visibility  string         `json:"visibility,omitempty" jsonschema:"private or shared; a new decision or report is shared with everyone in the project, any other new note is private to you and the admins above you; leave empty to keep it"`
+	Visibility  Visibility     `json:"visibility,omitempty" jsonschema:"private or shared; a new decision or report is shared with everyone in the project, any other new note is private to you and the admins above you; leave empty to keep it"`
 }
 
 type SignalArgs struct {
 	SessionArgs
-	To       string `json:"to" jsonschema:"target session id, session key, task id or task key; a request reaches the session on its next prompt"`
-	Kind     string `json:"kind" jsonschema:"info, request, response or alert"`
-	Message  string `json:"message" jsonschema:"at most 200 characters"`
-	ThreadID string `json:"threadId,omitempty" jsonschema:"answer a request with kind response and the same threadId"`
+	To       string     `json:"to" jsonschema:"target session id, session key, task id or task key; a request reaches the session on its next prompt"`
+	Kind     SignalKind `json:"kind" jsonschema:"info, request, response or alert"`
+	Message  string     `json:"message" jsonschema:"at most 200 characters"`
+	ThreadID string     `json:"threadId,omitempty" jsonschema:"answer a request with kind response and the same threadId"`
 }
 
 type TaskUpsertArgs struct {
@@ -101,9 +101,9 @@ type TaskUpsertArgs struct {
 
 type TaskStatusArgs struct {
 	SessionArgs
-	Key     string `json:"key" jsonschema:"task id such as widgets-12, or task key"`
-	Status  string `json:"status" jsonschema:"todo, inProgress, blocked, review, done or cancelled"`
-	Message string `json:"message,omitempty" jsonschema:"why, required when blocked"`
+	Key     string     `json:"key" jsonschema:"task id such as widgets-12, or task key"`
+	Status  TaskStatus `json:"status" jsonschema:"todo, inProgress, blocked, review, done or cancelled"`
+	Message string     `json:"message,omitempty" jsonschema:"why, required when blocked"`
 }
 
 type TaskClaimArgs struct {

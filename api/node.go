@@ -201,7 +201,7 @@ func label(ref, key string) string {
 type NoteInput struct {
 	SessionID   uuid.UUID      `json:"sessionId"`
 	Key         string         `json:"key,omitempty"`
-	Kind        string         `json:"kind,omitempty"`
+	Kind        Kind           `json:"kind,omitempty"`
 	Title       string         `json:"title"`
 	Body        string         `json:"body,omitempty"`
 	Tags        []string       `json:"tags,omitempty"`
@@ -209,5 +209,5 @@ type NoteInput struct {
 	RelatedKey  string         `json:"relatedKey,omitempty"`
 	BaseVersion int            `json:"baseVersion,omitempty"`
 	ProjectKey  string         `json:"projectKey,omitempty"`
-	Visibility  string         `json:"visibility,omitempty"`
+	Visibility  Visibility     `json:"visibility,omitempty"`
 }

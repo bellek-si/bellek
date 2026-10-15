@@ -25,11 +25,11 @@ func memoryScope(memoryType, scope string) string {
 	return ""
 }
 
-func memoryKind(memoryType string) string {
+func memoryKind(memoryType string) api.Kind {
 	if memoryType == "feedback" {
-		return "decision"
+		return api.KindDecision
 	}
-	return "note"
+	return api.KindNote
 }
 
 // The key is not redacted, because the marker in the state directory is keyed

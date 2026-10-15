@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -157,10 +156,6 @@ func (s *hookState) Recalled(claudeID string) recallMarker {
 	}
 	raw, err := os.ReadFile(p)
 	if err != nil {
-		return out
-	}
-	if bytes.HasPrefix(bytes.TrimSpace(raw), []byte("[")) {
-		_ = json.Unmarshal(raw, &out.Files)
 		return out
 	}
 	_ = json.Unmarshal(raw, &out)

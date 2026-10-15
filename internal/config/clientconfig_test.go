@@ -118,7 +118,6 @@ func TestLoadTrimsTheServerURL(t *testing.T) {
 
 func TestLoadReadsTheEnvironmentOnly(t *testing.T) {
 	clearEnv(t)
-	t.Setenv("BELLEK_DEV", "1")
 	home := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", home)
 	require.NoError(t, os.MkdirAll(filepath.Join(home, "bellek"), 0o700))
@@ -128,7 +127,7 @@ func TestLoadReadsTheEnvironmentOnly(t *testing.T) {
 	t.Chdir(cwd)
 
 	_, err := Load()
-	require.EqualError(t, err, "BELLEK_TOKEN is required", "a key in a file is never used, in dev mode either")
+	require.EqualError(t, err, "BELLEK_TOKEN is required", "a key in a file is never used")
 
 	t.Setenv("BELLEK_TOKEN", testToken)
 	cfg, err := Load()

@@ -173,7 +173,7 @@ func (s *fakeServer) serveImport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for _, d := range in.Docs {
-		if d.Kind == string(api.KindTask) && d.Status != "" && !slices.Contains(taskStatuses, d.Status) {
+		if d.Kind == api.KindTask && d.Status != "" && !slices.Contains(taskStatuses, d.Status) {
 			writeError(w, http.StatusBadRequest, api.CodeValidation, fmt.Sprintf("invalid input: status %q is not a task status", d.Status))
 			return
 		}
@@ -186,7 +186,7 @@ func (s *fakeServer) serveImport(w http.ResponseWriter, r *http.Request) {
 	}
 	var rep api.ImportReport
 	for _, d := range in.Docs {
-		id := d.Kind + "/" + d.Key
+		id := string(d.Kind) + "/" + d.Key
 		was, ok := s.stored[project][id]
 		switch {
 		case ok && reflect.DeepEqual(was, d):

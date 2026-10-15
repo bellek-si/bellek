@@ -214,6 +214,19 @@ func TestFillReadsTheGitStateOfTheCallersOwnCwd(t *testing.T) {
 	require.Equal(t, "git@given", args["repoRemote"], "a value the caller sent still wins")
 }
 
+func TestFillStripsCredentialsFromARemoteTheCallerSent(t *testing.T) {
+	schema := map[string]any{"type": "object", "properties": map[string]any{"repoRemote": map[string]any{}}}
+	args, err := mcpbridge.Fill(schema, json.RawMessage(`{"repoRemote":"https://x-access-token:ghs_secret@github.com/acme/app.git"}`), locals)
+	require.NoError(t, err)
+	require.Equal(t, "https://github.com/acme/app.git", args["repoRemote"])
+}
+
+func TestLocalsAreRedactedLikeTheHookLocation(t *testing.T) {
+	l := mcpbridge.LocalsFrom(filepath.Join(t.TempDir(), "password=hunter2hunter2"))
+	require.NotContains(t, l.Cwd, "hunter2")
+	require.Contains(t, l.Cwd, "[redacted:")
+}
+
 func TestFillKeepsTheBridgesGitStateWhenTheCallerNamesNoOtherCwd(t *testing.T) {
 	schema := map[string]any{"type": "object", "properties": map[string]any{"cwd": map[string]any{}, "repoRemote": map[string]any{}, "branch": map[string]any{}}}
 	for _, raw := range []string{`{"cwd":"/here"}`, `{"cwd":""}`, `{"cwd":7}`, `{}`} {

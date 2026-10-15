@@ -170,7 +170,7 @@ func (a *fakeAPI) Note(_ context.Context, in api.NoteInput) (*api.Node, error) {
 	}
 	s.Notes = append(s.Notes, in)
 	a.noteLog = append(a.noteLog, in)
-	return &api.Node{ID: uuid.New(), Kind: api.Kind(cmp.Or(in.Kind, string(api.KindNote))), Key: in.Key, Title: in.Title}, nil
+	return &api.Node{ID: uuid.New(), Kind: cmp.Or(in.Kind, api.KindNote), Key: in.Key, Title: in.Title}, nil
 }
 
 func (a *fakeAPI) Prompt(_ context.Context, id uuid.UUID, message string, ack []uuid.UUID) (*api.PromptResult, error) {

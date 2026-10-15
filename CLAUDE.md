@@ -19,7 +19,7 @@ This repository holds the `bellek` command, the Claude Code plugin and the hook 
 - The MCP tools in `api/tools.go` stay at twelve: adding one means removing one. `api/tools_test.go` checks the count.
 - The `mcp` command speaks the protocol on stdout, and `hook` prints nothing there, except `hook session-start`, `hook prompt` and `hook tool-use`, which answer Claude Code with one JSON object each and only when there is context to add. Every command logs to stderr through `stderrLogger` in `cmd/bellek/app.go`.
 - A hook exits zero whatever happens at runtime, so a missing server never blocks Claude Code. A malformed invocation still fails loudly, so a typo in `hooks.json` or an event a future Claude Code sends is not swallowed.
-- Capture text, the session name and the location a hook sends go through `internal/redact` before they leave the machine. The server does not scan again. [docs/privacy.md](docs/privacy.md) lists what each hook sends; keep it true when a hook changes.
+- Capture text, the session name and the location a hook or the MCP bridge sends go through `internal/redact` before they leave the machine. The server does not scan again. [docs/privacy.md](docs/privacy.md) lists what each hook sends; keep it true when a hook changes.
 - `plugin/hooks/hooks.json` stays identical to `hooks/claude-code/settings.example.json`, which `cmd/bellek/plugin_test.go` checks.
 - The client reads its settings from the environment only, never from a file.
 - Every `run` step in `.github/workflows` is a single make target, so CI runs the same on a laptop. `cmd/bellek/workflows_test.go` checks it.

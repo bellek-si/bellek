@@ -125,11 +125,11 @@ func TestReadDocsImportsClaudeMemoryFiles(t *testing.T) {
 	for _, d := range docs {
 		byKey[d.Key] = d
 	}
-	require.Equal(t, "decision", byKey["prefers-pnpm"].Kind)
+	require.Equal(t, api.KindDecision, byKey["prefers-pnpm"].Kind)
 	require.Equal(t, "Use pnpm", byKey["prefers-pnpm"].Title)
 	require.Equal(t, []string{"memory", "feedback"}, byKey["prefers-pnpm"].Tags)
 	require.Equal(t, "claudeMemory", byKey["prefers-pnpm"].Props["source"])
-	require.Equal(t, "note", byKey["layout"].Kind)
+	require.Equal(t, api.KindNote, byKey["layout"].Kind)
 	require.Equal(t, "internal/widgets.", byKey["layout"].Body)
 }
 
@@ -140,7 +140,7 @@ func TestReadDocsImportsOneMemoryFile(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, docs, 1)
 	require.Equal(t, "prefers-pnpm", docs[0].Key)
-	require.Equal(t, "decision", docs[0].Kind)
+	require.Equal(t, api.KindDecision, docs[0].Kind)
 	require.Equal(t, "Always pnpm.", docs[0].Body)
 }
 
@@ -156,8 +156,8 @@ func TestReadDocsMixesMemoryAndBellekFiles(t *testing.T) {
 	for _, d := range docs {
 		byKey[d.Key] = d
 	}
-	require.Equal(t, "decision", byKey["prefers-pnpm"].Kind)
-	require.Equal(t, "task", byKey["from-the-file"].Kind)
+	require.Equal(t, api.KindDecision, byKey["prefers-pnpm"].Kind)
+	require.Equal(t, api.KindTask, byKey["from-the-file"].Kind)
 	require.Equal(t, "todo", byKey["from-the-file"].Status)
 }
 
@@ -306,9 +306,9 @@ func TestWriteSnapshotWritesVisibilityOnlyOnNotesAndDecisions(t *testing.T) {
 
 	docs, err := readDocs(dir)
 	require.NoError(t, err)
-	got := map[string]string{}
+	got := map[string]api.Visibility{}
 	for _, d := range docs {
 		got[d.Key] = d.Visibility
 	}
-	require.Equal(t, map[string]string{"n1": "private", "d1": "shared", "t1": ""}, got)
+	require.Equal(t, map[string]api.Visibility{"n1": api.VisibilityPrivate, "d1": api.VisibilityShared, "t1": ""}, got)
 }

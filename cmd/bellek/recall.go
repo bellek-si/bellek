@@ -71,8 +71,8 @@ func signalSentence(sig api.Signal) string {
 			sb.WriteString(" (task " + focus + ")")
 		}
 	}
-	sb.WriteString(", " + sig.Kind + ": " + sentence(sig.Message))
-	if sig.Kind == "request" && sig.FromSessionKey != "" {
+	sb.WriteString(", " + string(sig.Kind) + ": " + sentence(sig.Message))
+	if sig.Kind == api.SignalRequest && sig.FromSessionKey != "" {
 		sb.WriteString(" Reply with memory_signal to " + sig.FromSessionKey)
 		if sig.ThreadID != "" {
 			sb.WriteString(", threadId " + sig.ThreadID)

@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/bellek-si/bellek/api"
+	"github.com/bellek-si/bellek/internal/bearer"
 	"github.com/google/uuid"
 )
 
@@ -47,35 +48,9 @@ func New(baseURL, token string, opts ...Option) *Client {
 	if next == nil {
 		next = http.DefaultTransport
 	}
-	h.Transport = bearerTransport{token: token, host: hostOf(c.base), next: next}
+	h.Transport = bearer.New(c.base, token, next)
 	c.http = &h
 	return c
-}
-
-// bearerTransport sends the key to the server's own host only. A header set on
-// the request itself would follow a redirect to a subdomain of that host, or to
-// the same host name on another port, because net/http copies it there.
-type bearerTransport struct {
-	token string
-	host  string
-	next  http.RoundTripper
-}
-
-func (b bearerTransport) RoundTrip(r *http.Request) (*http.Response, error) {
-	if r.URL.Host != b.host {
-		return b.next.RoundTrip(r)
-	}
-	clone := r.Clone(r.Context())
-	clone.Header.Set("Authorization", "Bearer "+b.token)
-	return b.next.RoundTrip(clone)
-}
-
-func hostOf(base string) string {
-	u, err := url.Parse(base)
-	if err != nil {
-		return ""
-	}
-	return u.Host
 }
 
 type Error struct {
@@ -126,10 +101,8 @@ func (c *Client) Prompt(ctx context.Context, id uuid.UUID, message string, ack [
 }
 
 func (c *Client) Artifacts(ctx context.Context, id uuid.UUID, paths []string) ([]api.Artifact, error) {
-	var out struct {
-		Items []api.Artifact `json:"items"`
-	}
-	if err := c.do(ctx, http.MethodPost, "/v1/sessions/"+id.String()+"/artifacts", api.ArtifactsInput{Paths: paths}, &out); err != nil {
+	out, err := call[api.ArtifactsResult](ctx, c, http.MethodPost, "/v1/sessions/"+id.String()+"/artifacts", api.ArtifactsInput{Paths: paths})
+	if err != nil {
 		return nil, err
 	}
 	return out.Items, nil
