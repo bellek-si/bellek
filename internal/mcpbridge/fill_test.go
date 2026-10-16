@@ -24,7 +24,7 @@ type objectSchema struct {
 	Properties map[string]property `json:"properties"`
 }
 
-var locals = mcpbridge.Locals{Cwd: "/here", RepoRemote: "github.com/acme/widgets", Branch: "dev"}
+var locals = mcpbridge.Locals{RepoRemote: "github.com/acme/widgets", Branch: "dev"}
 
 func TestFillReadsSchemasThatAreNotMaps(t *testing.T) {
 	tests := []struct {
@@ -32,10 +32,10 @@ func TestFillReadsSchemasThatAreNotMaps(t *testing.T) {
 		schema     any
 		wantFilled bool
 	}{
-		{"struct value", objectSchema{Type: "object", Properties: map[string]property{"cwd": {Type: "string"}}}, true},
-		{"struct pointer", &objectSchema{Type: "object", Properties: map[string]property{"cwd": {Type: "string"}}}, true},
+		{"struct value", objectSchema{Type: "object", Properties: map[string]property{"branch": {Type: "string"}}}, true},
+		{"struct pointer", &objectSchema{Type: "object", Properties: map[string]property{"branch": {Type: "string"}}}, true},
 		{"struct without the key", objectSchema{Type: "object", Properties: map[string]property{"limit": {Type: "integer"}}}, false},
-		{"schema that is not an object", "cwd", false},
+		{"schema that is not an object", "branch", false},
 		{"schema that cannot be marshalled", make(chan int), false},
 		{"nil schema", nil, false},
 	}
@@ -44,7 +44,7 @@ func TestFillReadsSchemasThatAreNotMaps(t *testing.T) {
 			args, err := mcpbridge.Fill(tt.schema, nil, locals)
 			require.NoError(t, err)
 			if tt.wantFilled {
-				require.Equal(t, "/here", args["cwd"])
+				require.Equal(t, "dev", args["branch"])
 			} else {
 				require.Empty(t, args)
 			}
@@ -54,12 +54,11 @@ func TestFillReadsSchemasThatAreNotMaps(t *testing.T) {
 
 func TestFillOverwritesEmptyStringsAndKeepsExtras(t *testing.T) {
 	schema := map[string]any{"type": "object", "properties": map[string]any{
-		"cwd": map[string]any{}, "branch": map[string]any{}, "repoRemote": map[string]any{},
+		"branch": map[string]any{}, "repoRemote": map[string]any{},
 	}}
-	args, err := mcpbridge.Fill(schema, json.RawMessage(`{"cwd":"","note":"keep me"}`), locals)
+	args, err := mcpbridge.Fill(schema, json.RawMessage(`{"branch":"","note":"keep me"}`), locals)
 	require.NoError(t, err)
-	require.Equal(t, "/here", args["cwd"], "an empty string is not an answer, the local value wins")
-	require.Equal(t, "dev", args["branch"])
+	require.Equal(t, "dev", args["branch"], "an empty string is not an answer, the local value wins")
 	require.Equal(t, locals.RepoRemote, args["repoRemote"])
 	require.Equal(t, "keep me", args["note"], "arguments the schema does not mention are forwarded untouched")
 }
@@ -72,29 +71,29 @@ func TestFillTreatsAnExplicitNullAsMissing(t *testing.T) {
 }
 
 func TestFillSkipsEmptyLocals(t *testing.T) {
-	schema := map[string]any{"type": "object", "properties": map[string]any{"cwd": map[string]any{}, "branch": map[string]any{}}}
-	args, err := mcpbridge.Fill(schema, nil, mcpbridge.Locals{Cwd: "/here"})
+	schema := map[string]any{"type": "object", "properties": map[string]any{"repoRemote": map[string]any{}, "branch": map[string]any{}}}
+	args, err := mcpbridge.Fill(schema, nil, mcpbridge.Locals{Branch: "dev"})
 	require.NoError(t, err)
-	require.Equal(t, "/here", args["cwd"])
-	require.NotContains(t, args, "branch")
+	require.Equal(t, "dev", args["branch"])
+	require.NotContains(t, args, "repoRemote")
 }
 
 func TestFillAddsTheLocalsEachToolTakesAndNothingElse(t *testing.T) {
-	all := mcpbridge.Locals{Cwd: "/here", RepoRemote: "github.com/acme/widgets", Branch: "dev"}
+	all := mcpbridge.Locals{RepoRemote: "github.com/acme/widgets", Branch: "dev"}
 	tests := []struct {
 		name   string
 		schema map[string]any
 		want   map[string]any
 	}{
 		{
-			"session_start, without the agentKind only the caller knows",
+			"session_start of an older server, without the cwd it still names or the agentKind only the caller knows",
 			object("agentKind", "agentId", "projectKey", "cwd", "repoRemote", "branch", "maxTokens", "harnessSessionId"),
-			map[string]any{"cwd": all.Cwd, "repoRemote": all.RepoRemote, "branch": all.Branch},
+			map[string]any{"repoRemote": all.RepoRemote, "branch": all.Branch},
 		},
 		{
 			"memory_get, which takes no branch",
 			object("key", "kind", "depth", "asOf", "cwd", "projectKey", "repoRemote"),
-			map[string]any{"cwd": all.Cwd, "repoRemote": all.RepoRemote},
+			map[string]any{"repoRemote": all.RepoRemote},
 		},
 	}
 	for _, tt := range tests {
@@ -107,10 +106,10 @@ func TestFillAddsTheLocalsEachToolTakesAndNothingElse(t *testing.T) {
 }
 
 func TestFillTakesNullArgumentsAsNone(t *testing.T) {
-	schema := map[string]any{"type": "object", "properties": map[string]any{"cwd": map[string]any{}}}
+	schema := map[string]any{"type": "object", "properties": map[string]any{"branch": map[string]any{}}}
 	args, err := mcpbridge.Fill(schema, json.RawMessage("null"), locals)
 	require.NoError(t, err)
-	require.Equal(t, locals.Cwd, args["cwd"])
+	require.Equal(t, locals.Branch, args["branch"])
 }
 
 func TestNewFailsWhenTheRemoteIsClosed(t *testing.T) {
@@ -165,7 +164,6 @@ func TestLocalsFromReadsTheGitRepository(t *testing.T) {
 	}
 
 	got := mcpbridge.LocalsFrom(dir)
-	require.Equal(t, dir, got.Cwd)
 	require.Equal(t, "example.com/acme/widgets", got.RepoRemote)
 	require.Equal(t, "trunk", got.Branch)
 
@@ -176,36 +174,10 @@ func TestLocalsFromReadsTheGitRepository(t *testing.T) {
 
 func TestLocalsFromOutsideAGitRepository(t *testing.T) {
 	dir := t.TempDir()
-	got := mcpbridge.LocalsFrom(dir)
-	require.Equal(t, dir, got.Cwd)
-	require.Empty(t, got.RepoRemote)
-	require.Empty(t, got.Branch)
+	require.Equal(t, mcpbridge.Locals{}, mcpbridge.LocalsFrom(dir))
 
 	empty := mcpbridge.LocalsFrom("")
 	require.Equal(t, mcpbridge.Locals{}, empty)
-}
-
-func TestFillReadsTheGitStateOfTheCallersOwnCwd(t *testing.T) {
-	dir := t.TempDir()
-	for _, args := range [][]string{
-		{"init", "-b", "feature"},
-		{"config", "user.email", "t@example.com"},
-		{"config", "user.name", "t"},
-		{"remote", "add", "origin", "https://example.com/acme/other.git"},
-		{"commit", "--allow-empty", "-m", "first"},
-	} {
-		require.NoError(t, exec.Command("git", append([]string{"-C", dir}, args...)...).Run(), args)
-	}
-	schema := map[string]any{"type": "object", "properties": map[string]any{"cwd": map[string]any{}, "repoRemote": map[string]any{}, "branch": map[string]any{}}}
-
-	args, err := mcpbridge.Fill(schema, json.RawMessage(`{"cwd":"`+dir+`"}`), locals)
-	require.NoError(t, err)
-	require.Equal(t, "example.com/acme/other", args["repoRemote"], "not the remote of the bridge's own checkout")
-	require.Equal(t, "feature", args["branch"])
-
-	args, err = mcpbridge.Fill(schema, json.RawMessage(`{"cwd":"`+dir+`","repoRemote":"git@github.com:acme/given.git"}`), locals)
-	require.NoError(t, err)
-	require.Equal(t, "github.com/acme/given", args["repoRemote"], "a value the caller sent still wins")
 }
 
 func TestFillStripsCredentialsFromARemoteTheCallerSent(t *testing.T) {
@@ -216,18 +188,27 @@ func TestFillStripsCredentialsFromARemoteTheCallerSent(t *testing.T) {
 }
 
 func TestLocalsAreRedactedLikeTheHookLocation(t *testing.T) {
-	l := mcpbridge.LocalsFrom(filepath.Join(t.TempDir(), "password=hunter2hunter2"))
-	require.NotContains(t, l.Cwd, "hunter2")
-	require.Contains(t, l.Cwd, "[redacted:")
+	dir := t.TempDir()
+	for _, args := range [][]string{
+		{"init", "-b", "fix/password=hunter2hunter2"},
+		{"config", "user.email", "t@example.com"},
+		{"config", "user.name", "t"},
+		{"commit", "--allow-empty", "-m", "first"},
+	} {
+		require.NoError(t, exec.Command("git", append([]string{"-C", dir}, args...)...).Run(), args)
+	}
+	l := mcpbridge.LocalsFrom(dir)
+	require.NotContains(t, l.Branch, "hunter2")
+	require.Contains(t, l.Branch, "[redacted:")
 }
 
-func TestFillKeepsTheBridgesGitStateWhenTheCallerNamesNoOtherCwd(t *testing.T) {
+func TestFillIgnoresACwdTheCallerSends(t *testing.T) {
 	schema := map[string]any{"type": "object", "properties": map[string]any{"cwd": map[string]any{}, "repoRemote": map[string]any{}, "branch": map[string]any{}}}
 	for _, raw := range []string{`{"cwd":"/here"}`, `{"cwd":""}`, `{"cwd":7}`, `{}`} {
 		t.Run(raw, func(t *testing.T) {
 			args, err := mcpbridge.Fill(schema, json.RawMessage(raw), locals)
 			require.NoError(t, err)
-			require.Equal(t, locals.RepoRemote, args["repoRemote"], "/here is no repository, so a fresh lookup would find no remote")
+			require.Equal(t, locals.RepoRemote, args["repoRemote"], "a cwd never moves the lookup to another directory")
 			require.Equal(t, "dev", args["branch"])
 		})
 	}

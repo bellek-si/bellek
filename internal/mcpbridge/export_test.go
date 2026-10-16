@@ -6,7 +6,7 @@ import (
 )
 
 func Fill(schema any, raw json.RawMessage, locals Locals) (map[string]any, error) {
-	return fill(schema, raw, locals, LocalsFrom)
+	return fill(schema, raw, locals)
 }
 
 func HTTPClient(baseURL, token string) *http.Client {

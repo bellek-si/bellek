@@ -237,7 +237,7 @@ func (r *hookRunner) newSession(ctx context.Context, in hookInput) (*api.Session
 		return nil, errNoRepository
 	}
 	harness, _ := api.CanonicalUUID(in.SessionID)
-	started, err := r.api.SessionStart(ctx, api.SessionStartInput{Cwd: loc.Cwd, RepoRemote: loc.RepoRemote, AgentKind: "claudeCode", AgentID: host, Branch: loc.Branch, MaxTokens: r.cfg.BriefTokens, HarnessSessionID: harness})
+	started, err := r.api.SessionStart(ctx, api.SessionStartInput{RepoRemote: loc.RepoRemote, AgentKind: "claudeCode", AgentID: host, Branch: loc.Branch, MaxTokens: r.cfg.BriefTokens, HarnessSessionID: harness})
 	if err != nil {
 		return nil, err
 	}
@@ -251,15 +251,10 @@ func (r *hookRunner) restart(ctx context.Context, in hookInput) (*api.SessionSta
 }
 
 func (r *hookRunner) location(ctx context.Context, cwd string) api.SessionLocationInput {
-	loc := api.SessionLocationInput{
-		Cwd:        redact.Text(cwd, 0),
+	return api.SessionLocationInput{
 		RepoRemote: redact.Text(api.RepoAddress(r.remote(ctx, cwd)), 0),
 		Branch:     redact.Text(r.branch(ctx, cwd), 0),
 	}
-	if roots := r.worktrees(ctx, cwd); len(roots) > 0 {
-		loc.Cwd = redact.Text(roots[0], 0)
-	}
-	return loc
 }
 
 func (r *hookRunner) cwd(ctx context.Context, in hookInput) error {

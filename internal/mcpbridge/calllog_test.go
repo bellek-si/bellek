@@ -23,7 +23,7 @@ func bridgedWithLog(t *testing.T) loggedBridge {
 	core, logs := observer.New(zapcore.InfoLevel)
 	log := zap.New(core).Sugar()
 	remote := connect(t, newRemote(), "bridge")
-	local, err := mcpbridge.New(context.Background(), remote, mcpbridge.Locals{Cwd: "/client/repo"}, "test", mcpbridge.WithLogger(log))
+	local, err := mcpbridge.New(context.Background(), remote, mcpbridge.Locals{Branch: "main"}, "test", mcpbridge.WithLogger(log))
 	require.NoError(t, err)
 	return loggedBridge{agent: connect(t, local, "agent"), remote: remote, logs: logs}
 }

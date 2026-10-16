@@ -31,8 +31,7 @@ var Tools = []Tool{
 }
 
 type ScopeArgs struct {
-	Cwd        string `json:"cwd,omitempty" jsonschema:"working directory of the agent, used to resolve the project"`
-	ProjectKey string `json:"projectKey,omitempty" jsonschema:"explicit project key, overrides cwd"`
+	ProjectKey string `json:"projectKey,omitempty" jsonschema:"explicit project key, overrides repoRemote"`
 	RepoRemote string `json:"repoRemote,omitempty" jsonschema:"git remote url or address of the repository, filled by the bridge"`
 }
 
