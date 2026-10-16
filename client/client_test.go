@@ -57,7 +57,7 @@ func TestEveryCallSendsItsMethodPathAndBody(t *testing.T) {
 		{
 			"session start", http.StatusCreated, `{"session":{"id":"` + sid + `","key":"session-000000000001","status":"active","props":{"branch":"main"}},"briefing":{"markdown":"## Frontier\n","truncated":true}}`,
 			func(t *testing.T, c *client.Client) {
-				started, err := c.SessionStart(ctx, api.SessionStartInput{Cwd: "/client/repo", RepoRemote: "git@github.com:acme/widgets.git", RepoRoot: "/client/repo", AgentKind: "claudeCode", AgentID: "a", Branch: "main", MaxTokens: 800, HarnessSessionID: "c0ffee00-1111-2222-3333-444455556666"})
+				started, err := c.SessionStart(ctx, api.SessionStartInput{RepoRemote: "github.com/acme/widgets", AgentKind: "claudeCode", AgentID: "a", Branch: "main", MaxTokens: 800, HarnessSessionID: "c0ffee00-1111-2222-3333-444455556666"})
 				require.NoError(t, err)
 				require.Equal(t, id, started.Session.ID)
 				require.Equal(t, "session-000000000001", started.Session.Key)
@@ -65,7 +65,7 @@ func TestEveryCallSendsItsMethodPathAndBody(t *testing.T) {
 				require.Equal(t, api.Briefing{Markdown: "## Frontier\n", Truncated: true}, started.Briefing)
 			},
 			http.MethodPost, "/v1/sessions",
-			`{"cwd":"/client/repo","repoRemote":"git@github.com:acme/widgets.git","repoRoot":"/client/repo","agentKind":"claudeCode","agentId":"a","branch":"main","maxTokens":800,"harnessSessionId":"c0ffee00-1111-2222-3333-444455556666"}`,
+			`{"repoRemote":"github.com/acme/widgets","agentKind":"claudeCode","agentId":"a","branch":"main","maxTokens":800,"harnessSessionId":"c0ffee00-1111-2222-3333-444455556666"}`,
 		},
 		{
 			"prompt", http.StatusCreated, `{"turn":2,"previousTurnFiles":1,"previousTurnNoted":false,"related":[],"signals":[],"focus":{"kind":"task","key":"auth-refresh","status":"inProgress"},"focusTurn":3}`,
@@ -184,7 +184,7 @@ func TestCallsReportTheErrorTheServerAnswers(t *testing.T) {
 			return err
 		}},
 		{"a session start without an agent", http.StatusBadRequest, api.CodeValidation, "invalid input: agentKind is required", func(c *client.Client) error {
-			_, err := c.SessionStart(ctx, api.SessionStartInput{Cwd: "/x"})
+			_, err := c.SessionStart(ctx, api.SessionStartInput{RepoRemote: "github.com/acme/x"})
 			return err
 		}},
 		{"an unknown project", http.StatusNotFound, api.CodeNotFound, "project not found", func(c *client.Client) error {
@@ -210,7 +210,7 @@ func TestCallsReportTheErrorTheServerAnswers(t *testing.T) {
 			return c.SessionEnd(ctx, id, "again")
 		}},
 		{"a location for an unknown session", http.StatusNotFound, api.CodeNotFound, "session not found", func(c *client.Client) error {
-			return c.SessionLocation(ctx, id, api.SessionLocationInput{Cwd: "/repo"})
+			return c.SessionLocation(ctx, id, api.SessionLocationInput{RepoRemote: "github.com/acme/widgets"})
 		}},
 	}
 	for _, tt := range tests {

@@ -3,10 +3,8 @@ package api
 import "github.com/google/uuid"
 
 type SessionStartInput struct {
-	Cwd        string `json:"cwd,omitempty"`
 	ProjectKey string `json:"projectKey,omitempty"`
 	RepoRemote string `json:"repoRemote,omitempty"`
-	RepoRoot   string `json:"repoRoot,omitempty"`
 	AgentKind  string `json:"agentKind"`
 	AgentID    string `json:"agentId,omitempty"`
 	Branch     string `json:"branch,omitempty"`
@@ -41,9 +39,7 @@ type SessionEndInput struct {
 }
 
 type SessionLocationInput struct {
-	Cwd        string `json:"cwd"`
-	RepoRemote string `json:"repoRemote,omitempty"`
-	RepoRoot   string `json:"repoRoot,omitempty"`
+	RepoRemote string `json:"repoRemote"`
 	Branch     string `json:"branch,omitempty"`
 }
 

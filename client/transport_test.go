@@ -178,11 +178,11 @@ func TestTypedCallsPropagateErrors(t *testing.T) {
 	require.Nil(t, snap)
 	require.True(t, client.IsCode(err, "unauthorized"), err)
 
-	started, err := wrong.SessionStart(ctx, api.SessionStartInput{Cwd: "/repo", AgentKind: "codex"})
+	started, err := wrong.SessionStart(ctx, api.SessionStartInput{RepoRemote: "github.com/acme/widgets", AgentKind: "codex"})
 	require.Nil(t, started)
 	require.True(t, client.IsCode(err, "unauthorized"), err)
 
-	err = wrong.SessionLocation(ctx, uuid.New(), api.SessionLocationInput{Cwd: "/repo"})
+	err = wrong.SessionLocation(ctx, uuid.New(), api.SessionLocationInput{RepoRemote: "github.com/acme/widgets"})
 	require.True(t, client.IsCode(err, "unauthorized"), err)
 }
 
@@ -223,11 +223,11 @@ func TestSessionLocationPostsTheLocation(t *testing.T) {
 	})
 	ctx := context.Background()
 	id := uuid.MustParse("01999b1a-0000-7000-8000-000000000001")
-	err := c.SessionLocation(ctx, id, api.SessionLocationInput{Cwd: "/repo", RepoRemote: "git@github.com:acme/widgets.git", Branch: "feat/x"})
+	err := c.SessionLocation(ctx, id, api.SessionLocationInput{RepoRemote: "github.com/acme/widgets", Branch: "feat/x"})
 	require.NoError(t, err)
 	require.Equal(t, "/v1/sessions/"+id.String()+"/location", path)
-	require.JSONEq(t, `{"cwd":"/repo","repoRemote":"git@github.com:acme/widgets.git","branch":"feat/x"}`, body)
+	require.JSONEq(t, `{"repoRemote":"github.com/acme/widgets","branch":"feat/x"}`, body)
 
-	require.NoError(t, c.SessionLocation(ctx, id, api.SessionLocationInput{Cwd: "/repo"}))
-	require.JSONEq(t, `{"cwd":"/repo"}`, body, "an empty remote and branch are left out")
+	require.NoError(t, c.SessionLocation(ctx, id, api.SessionLocationInput{RepoRemote: "github.com/acme/widgets"}))
+	require.JSONEq(t, `{"repoRemote":"github.com/acme/widgets"}`, body, "an empty branch is left out")
 }

@@ -25,7 +25,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const testRemote = "git@github.com:acme/widgets.git"
+const testRemote = "github.com/acme/widgets"
 
 type hookFixture struct {
 	api    *fakeAPI
@@ -96,7 +96,7 @@ func TestHookLifecycle(t *testing.T) {
 	f.run(t, "session-start", in)
 	s := f.session(t, "claude-1")
 	require.Len(t, f.api.sessions, 1)
-	require.Equal(t, api.SessionStartInput{Cwd: "/repo", RepoRemote: testRemote, RepoRoot: "/repo", AgentKind: "claudeCode", AgentID: host, Branch: "main"}, s.Start)
+	require.Equal(t, api.SessionStartInput{RepoRemote: testRemote, AgentKind: "claudeCode", AgentID: host, Branch: "main"}, s.Start)
 
 	f.run(t, "pre-compact", hookInput{SessionID: "claude-1", Cwd: "/repo", Trigger: "auto"})
 	checkpoints := f.checkpoints()
@@ -671,7 +671,7 @@ func TestHookToolUseKeepsWorktreeFilesAndDropsTheRest(t *testing.T) {
 	edit("/home/jane/.claude/plans/x.md")
 	edit(cwd + "/README.md")
 	require.Equal(t, [][]string{{"cmd/bellek/hook.go"}, {"README.md"}}, f.session(t, "c").Artifacts)
-	require.Equal(t, 3, f.worktreeCalls, "git is asked once at session start, then only when a path is outside cwd")
+	require.Equal(t, 2, f.worktreeCalls, "git is asked only when a path is outside cwd")
 }
 
 func TestHookStateRoundTrip(t *testing.T) {
@@ -741,8 +741,10 @@ func TestDefaultHookStateDirectory(t *testing.T) {
 
 func TestHookCommandStaysQuietWhenTheServerIsUnreachable(t *testing.T) {
 	repo := t.TempDir()
-	out, err := exec.Command("git", "-C", repo, "init", "--quiet").CombinedOutput()
-	require.NoError(t, err, string(out))
+	for _, args := range [][]string{{"init", "--quiet"}, {"remote", "add", "origin", "git@github.com:acme/widgets.git"}} {
+		out, err := exec.Command("git", append([]string{"-C", repo}, args...)...).CombinedOutput()
+		require.NoError(t, err, string(out))
+	}
 	dirs := strings.NewReplacer("REPO", repo, "PLAIN", t.TempDir())
 	tests := []struct {
 		name  string
@@ -1128,17 +1130,30 @@ func TestHookMemoryMarkerIsPrivate(t *testing.T) {
 	require.Equal(t, os.FileMode(0o600), marker.Mode().Perm())
 }
 
-func TestHookSessionStartJoinsTheProjectOfTheMainWorktree(t *testing.T) {
+func TestHookSessionStartSendsTheRepositoryAddress(t *testing.T) {
 	f := newHookFixture(t)
-	f.r.gitOps.remote = func(context.Context, string) string { return "" }
+	f.r.gitOps.remote = func(context.Context, string) string { return "git@github.com:Acme/Widgets.git" }
 	f.r.gitOps.worktrees = func(_ context.Context, cwd string) []string { return []string{"/main", cwd} }
 	f.run(t, "session-start", hookInput{SessionID: "a", Cwd: "/main"})
 	f.run(t, "session-start", hookInput{SessionID: "b", Cwd: "/main-feature"})
 	for _, claudeID := range []string{"a", "b"} {
 		start := f.session(t, claudeID).Start
-		require.Equal(t, "/main", start.RepoRoot, "a worktree session names the main worktree, so the server finds the one project by path")
-		require.Equal(t, "/main", start.Cwd)
-		require.Empty(t, start.RepoRemote)
+		require.Equal(t, api.SessionStartInput{RepoRemote: "github.com/acme/widgets", AgentKind: "claudeCode", AgentID: start.AgentID, Branch: "main"}, start, "no local path goes out")
+	}
+}
+
+func TestHookSessionStartWithoutARepositoryAddressRecordsNothing(t *testing.T) {
+	for _, remote := range []string{"", "/srv/git/widgets.git", "file:///srv/git/widgets.git"} {
+		f := newHookFixture(t)
+		f.r.gitOps.remote = func(context.Context, string) string { return remote }
+		f.r.gitOps.worktrees = func(_ context.Context, cwd string) []string { return []string{cwd} }
+		f.run(t, "session-start", hookInput{SessionID: "c", Cwd: "/plain"})
+		f.run(t, "prompt", hookInput{SessionID: "c", Cwd: "/plain", Prompt: "hello"})
+		_, ok := f.state.Load("c")
+		require.False(t, ok, remote)
+		require.Empty(t, f.out.String(), remote)
+		require.Empty(t, f.logs, remote)
+		require.Empty(t, f.api.calls, "a repository without an address never reaches the server: %q", remote)
 	}
 }
 
@@ -1166,16 +1181,6 @@ func TestHookSessionStartOutsideARepositoryRecordsNothing(t *testing.T) {
 	require.Empty(t, f.out.String(), "the model is told nothing")
 	require.Empty(t, f.logs, "skipping is not a failure")
 	require.Empty(t, f.api.calls, "a folder outside a repository never reaches the server")
-}
-
-func TestHookSessionStartWithARemoteButNoWorktreesUsesCwd(t *testing.T) {
-	f := newHookFixture(t)
-	f.r.gitOps.worktrees = nil
-	f.run(t, "session-start", hookInput{SessionID: "c", Cwd: "/repo/sub"})
-	start := f.session(t, "c").Start
-	require.Equal(t, "/repo/sub", start.Cwd)
-	require.Equal(t, testRemote, start.RepoRemote)
-	require.Empty(t, start.RepoRoot, "no root is sent when git gives none")
 }
 
 func TestHookSessionEndKeepsTheMappingUntilTheServerAnswers(t *testing.T) {
@@ -1328,7 +1333,7 @@ func TestHookCwdUpdatesTheBranch(t *testing.T) {
 
 	f.r.gitOps.branch = func(context.Context, string) string { return "feat/x" }
 	f.run(t, "cwd", hookInput{SessionID: "c", Cwd: "/repo/api"})
-	require.Equal(t, []api.SessionLocationInput{{Cwd: "/repo/api", RepoRemote: testRemote, RepoRoot: "/repo/api", Branch: "feat/x"}}, s.Locations)
+	require.Equal(t, []api.SessionLocationInput{{RepoRemote: testRemote, Branch: "feat/x"}}, s.Locations)
 
 	f.run(t, "cwd", hookInput{SessionID: "unknown", Cwd: "/repo"})
 	require.Equal(t, 1, f.api.called("SessionLocation"), "an unmapped session sends nothing")
@@ -1363,27 +1368,6 @@ func TestHookCwdWarnsWhenTheServerIsDown(t *testing.T) {
 	sent, err := f.state.Drain(func(spooled) error { return nil })
 	require.NoError(t, err)
 	require.Zero(t, sent, "an unreachable server never spools a location")
-}
-
-func TestHookCwdSendsTheMainWorktreeRoot(t *testing.T) {
-	f := newHookFixture(t)
-	f.run(t, "session-start", hookInput{SessionID: "c", Cwd: "/repo"})
-	s := f.session(t, "c")
-
-	f.r.gitOps.worktrees = func(_ context.Context, cwd string) []string { return []string{"/repo", cwd} }
-	f.run(t, "cwd", hookInput{SessionID: "c", Cwd: "/repo-feature"})
-	require.Equal(t, "/repo", s.Locations[0].Cwd, "the main worktree root goes out, not the raw cwd")
-	require.Equal(t, "/repo", s.Locations[0].RepoRoot)
-
-	f.r.gitOps.worktrees = nil
-	f.run(t, "cwd", hookInput{SessionID: "c", Cwd: "/repo/api"})
-	require.Equal(t, "/repo/api", s.Locations[1].Cwd)
-
-	f.r.gitOps.worktrees = func(context.Context, string) []string { return nil }
-	f.run(t, "cwd", hookInput{SessionID: "c", Cwd: "/repo/web"})
-	require.Equal(t, "/repo/web", s.Locations[2].Cwd, "an empty worktree list falls back to the cwd")
-	require.Empty(t, s.Locations[2].RepoRoot)
-	require.Empty(t, f.logs)
 }
 
 func writeTranscript(t *testing.T, lines ...string) string {
@@ -1687,7 +1671,7 @@ func TestNewHookRunnerClientStopsAtItsBudget(t *testing.T) {
 
 	r := newHookRunner(a, &bytes.Buffer{}, 100*time.Millisecond)
 	began := time.Now()
-	_, err = r.api.SessionStart(context.Background(), api.SessionStartInput{Cwd: "/repo"})
+	_, err = r.api.SessionStart(context.Background(), api.SessionStartInput{RepoRemote: testRemote})
 	require.Less(t, time.Since(began), 2*time.Second, "the runner's client must use the budget, not the client default")
 	var timeout *url.Error
 	require.ErrorAs(t, err, &timeout)
@@ -1842,8 +1826,6 @@ func TestHookRedactsTheLocationAndNameItSends(t *testing.T) {
 
 	s := f.session(t, "c")
 	require.NotContains(t, s.Start.RepoRemote, "secret-for-test")
-	require.NotContains(t, s.Start.Cwd, "abcdefghijklmnop")
-	require.NotContains(t, s.Start.RepoRoot, "abcdefghijklmnop")
 	require.NotContains(t, s.Start.Branch, "abcdefghijklmn")
 
 	f.r.gitOps.branch = func(context.Context, string) string { return "fix/secret=abcdefghijklmnopq" }
@@ -1851,7 +1833,6 @@ func TestHookRedactsTheLocationAndNameItSends(t *testing.T) {
 	require.Len(t, s.Locations, 1)
 	require.Contains(t, s.Locations[0].Branch, "[redacted:", "the location route got the new branch, redacted")
 	require.NotContains(t, s.Locations[0].Branch, "abcdefghijklmnopq")
-	require.NotContains(t, s.Locations[0].Cwd, "abcdefghijklmnop")
 	require.NotContains(t, s.Locations[0].RepoRemote, "secret-for-test")
 
 	transcript := writeTranscript(t, `{"type":"user","slug":"rotate-token=abcdefghijklmnop-brave-otter"}`)
