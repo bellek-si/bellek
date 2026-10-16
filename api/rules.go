@@ -43,7 +43,9 @@ func RepoAddress(remote string) string {
 		}
 	}
 	rest = strings.Trim(rest, "/")
-	rest = strings.Trim(strings.TrimSuffix(rest, ".git"), "/")
+	if strings.HasSuffix(strings.ToLower(rest), ".git") {
+		rest = strings.Trim(rest[:len(rest)-len(".git")], "/")
+	}
 	if host == "" || rest == "" || strings.ContainsAny(host, "[]") {
 		return ""
 	}
