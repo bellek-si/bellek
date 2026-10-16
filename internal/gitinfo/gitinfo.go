@@ -11,7 +11,7 @@ import (
 )
 
 func Remote(ctx context.Context, cwd string) string {
-	return api.RemoteWithoutCredentials(output(ctx, cwd, "config", "--get", "remote.origin.url"))
+	return api.RepoAddress(output(ctx, cwd, "config", "--get", "remote.origin.url"))
 }
 
 func output(ctx context.Context, cwd string, args ...string) string {

@@ -104,10 +104,10 @@ func resolveAll(t *testing.T, paths []string) []string {
 	return out
 }
 
-func TestRemoteDropsTheCredentialsAClonePutInTheURL(t *testing.T) {
+func TestRemoteIsTheRepositoryAddressWithoutCredentials(t *testing.T) {
 	repo, git := newRepo(t)
 	git("config", "remote.origin.url", "https://x-access-token:secret-for-test@github.com/o/r.git")
-	require.Equal(t, "https://github.com/o/r.git", gitinfo.Remote(context.Background(), repo))
+	require.Equal(t, "github.com/o/r", gitinfo.Remote(context.Background(), repo))
 }
 
 func TestStatus(t *testing.T) {

@@ -6,7 +6,7 @@
 
 | Hook | Request | What it carries |
 |---|---|---|
-| `session-start` | `POST /v1/sessions` | The main worktree root as `cwd` and `repoRoot`, the git remote without credentials, the branch, `agentKind` `claudeCode`, your hostname as `agentId`, the Claude Code session id when it is a uuid, and the briefing budget |
+| `session-start` | `POST /v1/sessions` | The main worktree root as `cwd`, the repository address, such as `github.com/acme/app`, which carries no credentials, the branch, `agentKind` `claudeCode`, your hostname as `agentId`, the Claude Code session id when it is a uuid, and the briefing budget |
 | `session-start` on a reused session | `GET /v1/briefing` | The Bellek session id and the briefing budget |
 | `session-start` | `POST /v1/notes` | One note per Claude Code memory file that changed since the last start, see [Memory sync](hooks.md#memory-sync) |
 | `prompt` | `POST /v1/sessions/:id/prompt` | Your prompt, cut at 16 KiB, and the ids of the signals the last prompt showed |
@@ -25,7 +25,7 @@ Never sent: the contents of any file other than a Claude Code memory file, tool 
 
 ## `bellek mcp`
 
-The MCP bridge forwards the tool calls the model makes to `/mcp`, with the arguments the model chose, as the model wrote them. It adds the working directory, the git remote, the main worktree root and the branch to a call when the tool takes them and the model left them out, and those four go through `internal/redact` like the location a hook sends. A git remote never carries its credentials, even one the model wrote.
+The MCP bridge forwards the tool calls the model makes to `/mcp`, with the arguments the model chose, as the model wrote them. It adds the working directory, the repository address and the branch to a call when the tool takes them and the model left them out, and those three go through `internal/redact` like the location a hook sends. A remote the model wrote is turned into its address too, so it never carries credentials.
 
 ## The other commands
 

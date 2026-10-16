@@ -28,7 +28,6 @@ func WithLogger(log *zap.SugaredLogger) Option {
 type Locals struct {
 	Cwd        string
 	RepoRemote string
-	RepoRoot   string
 	Branch     string
 }
 
@@ -37,18 +36,14 @@ func LocalsFrom(cwd string) Locals {
 }
 
 func localsAt(ctx context.Context, cwd string) Locals {
-	l := Locals{Cwd: redact.Text(cwd, 0), RepoRemote: redact.Text(gitinfo.Remote(ctx, cwd), 0), Branch: redact.Text(gitinfo.Branch(ctx, cwd), 0)}
-	if roots := gitinfo.Worktrees(ctx, cwd); len(roots) > 0 {
-		l.RepoRoot = redact.Text(roots[0], 0)
-	}
-	return l
+	return Locals{Cwd: redact.Text(cwd, 0), RepoRemote: redact.Text(gitinfo.Remote(ctx, cwd), 0), Branch: redact.Text(gitinfo.Branch(ctx, cwd), 0)}
 }
 
 const callerGitTimeout = time.Second
 
 func (l Locals) values() map[string]string {
 	raw, _ := json.Marshal(api.SessionStartArgs{
-		ScopeArgs: api.ScopeArgs{Cwd: l.Cwd, RepoRemote: l.RepoRemote, RepoRoot: l.RepoRoot},
+		ScopeArgs: api.ScopeArgs{Cwd: l.Cwd, RepoRemote: l.RepoRemote},
 		Branch:    l.Branch,
 	})
 	var fields map[string]any
@@ -152,7 +147,7 @@ func fill(schema any, raw json.RawMessage, locals Locals, locate func(cwd string
 		args[key] = value
 	}
 	if remote, ok := args["repoRemote"].(string); ok {
-		args["repoRemote"] = api.RemoteWithoutCredentials(remote)
+		args["repoRemote"] = api.RepoAddress(remote)
 	}
 	return args, nil
 }

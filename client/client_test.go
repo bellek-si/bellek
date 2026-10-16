@@ -57,7 +57,7 @@ func TestEveryCallSendsItsMethodPathAndBody(t *testing.T) {
 		{
 			"session start", http.StatusCreated, `{"session":{"id":"` + sid + `","key":"session-000000000001","status":"active","props":{"branch":"main"}},"briefing":{"markdown":"## Frontier\n","truncated":true}}`,
 			func(t *testing.T, c *client.Client) {
-				started, err := c.SessionStart(ctx, api.SessionStartInput{Cwd: "/client/repo", RepoRemote: "git@github.com:acme/widgets.git", RepoRoot: "/client/repo", AgentKind: "claudeCode", AgentID: "a", Branch: "main", MaxTokens: 800, HarnessSessionID: "c0ffee00-1111-2222-3333-444455556666"})
+				started, err := c.SessionStart(ctx, api.SessionStartInput{Cwd: "/client/repo", RepoRemote: "github.com/acme/widgets", AgentKind: "claudeCode", AgentID: "a", Branch: "main", MaxTokens: 800, HarnessSessionID: "c0ffee00-1111-2222-3333-444455556666"})
 				require.NoError(t, err)
 				require.Equal(t, id, started.Session.ID)
 				require.Equal(t, "session-000000000001", started.Session.Key)
@@ -65,7 +65,7 @@ func TestEveryCallSendsItsMethodPathAndBody(t *testing.T) {
 				require.Equal(t, api.Briefing{Markdown: "## Frontier\n", Truncated: true}, started.Briefing)
 			},
 			http.MethodPost, "/v1/sessions",
-			`{"cwd":"/client/repo","repoRemote":"git@github.com:acme/widgets.git","repoRoot":"/client/repo","agentKind":"claudeCode","agentId":"a","branch":"main","maxTokens":800,"harnessSessionId":"c0ffee00-1111-2222-3333-444455556666"}`,
+			`{"cwd":"/client/repo","repoRemote":"github.com/acme/widgets","agentKind":"claudeCode","agentId":"a","branch":"main","maxTokens":800,"harnessSessionId":"c0ffee00-1111-2222-3333-444455556666"}`,
 		},
 		{
 			"prompt", http.StatusCreated, `{"turn":2,"previousTurnFiles":1,"previousTurnNoted":false,"related":[],"signals":[],"focus":{"kind":"task","key":"auth-refresh","status":"inProgress"},"focusTurn":3}`,

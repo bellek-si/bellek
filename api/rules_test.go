@@ -7,30 +7,58 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRemoteWithoutCredentialsDropsWhatACloneAddedToAuthenticate(t *testing.T) {
+func TestRepoAddress(t *testing.T) {
 	tests := []struct{ remote, want string }{
-		{"https://x-access-token:secret-for-test@github.com/o/r.git", "https://github.com/o/r.git"},
-		{"https://oauth2:secret-for-test@gitlab.com/o/r.git", "https://gitlab.com/o/r.git"},
-		{"https://token-as-user-for-test@dev.azure.com/org/p/_git/r", "https://dev.azure.com/org/p/_git/r"},
-		{"http://x-access-token:secret-for-test@git.internal/o/r.git", "http://git.internal/o/r.git"},
-		{"ssh://git:secret-for-test@example.com/o/r.git", "ssh://git@example.com/o/r.git"},
-		{"https://deploy:my^secret-for-test@git.example.com/o/r.git", "https://git.example.com/o/r.git"},
-		{"https://deploy:pässword-for-test@git.example.com/o/r.git", "https://git.example.com/o/r.git"},
-		{"ssh://git:my|secret-for-test@example.com/o/r.git", "ssh://git@example.com/o/r.git"},
-		{"HTTPS://token-as-user-for-test@github.com/o/r.git", "HTTPS://github.com/o/r.git"},
-		{"https://deploy:p@ss-for-test@git.example.com/o/r.git?x=a@b", "https://git.example.com/o/r.git?x=a@b"},
-		{"https://token-as-user-for-test@git.example.com", "https://git.example.com"},
-		{"https://git.example.com?x=a@b", "https://git.example.com?x=a@b"},
-		{"https://git.example.com#a@b", "https://git.example.com#a@b"},
-		{"ssh://git@[fe80::1]/o/r.git", "ssh://git@[fe80::1]/o/r.git"},
-		{"ssh://git@github.com/o/r.git", "ssh://git@github.com/o/r.git"},
-		{"git@github.com:o/r.git", "git@github.com:o/r.git"},
-		{"https://github.com/o/r.git", "https://github.com/o/r.git"},
-		{"/srv/git/r.git", "/srv/git/r.git"},
+		{"git@github.com:bellek-si/cloud.git", "github.com/bellek-si/cloud"},
+		{"github.com:bellek-si/cloud", "github.com/bellek-si/cloud"},
+		{"https://github.com/bellek-si/cloud", "github.com/bellek-si/cloud"},
+		{"https://ghp_token@github.com/bellek-si/cloud.git/", "github.com/bellek-si/cloud"},
+		{"ssh://git@github.com:22/bellek-si/cloud.git", "github.com/bellek-si/cloud"},
+		{"  HTTPS://GitHub.com/Bellek-si/Cloud.git  ", "github.com/bellek-si/cloud"},
+		{"https://gitlab.example.com/group/sub/app.git", "gitlab.example.com/group/sub/app"},
+		{"https://gitlab.example.com/o/r.git?private_token=glpat-secret", "gitlab.example.com/o/r"},
+		{"https://github.com/o/r#token=secret", "github.com/o/r"},
+		{"ssh://git@[fe80::1]:22/o/r.git", ""},
+		{"git@[fe80::1]:o/r.git", ""},
+		{"https://github.com/o/r\n/x", ""},
+		{"git@github.com:o/r\x1b[31m", ""},
+		{"github.com/bellek-si/cloud", "github.com/bellek-si/cloud"},
 		{"", ""},
+		{"/srv/git/cloud.git", ""},
+		{"../cloud", ""},
+		{"file:///srv/git/cloud.git", ""},
+		{`C:\repos\cloud`, ""},
+		{"cloud", ""},
+		{"x:foo.com/o/r", ""},
+		{"https://github.com/", ""},
 	}
 	for _, tt := range tests {
-		require.Equal(t, tt.want, api.RemoteWithoutCredentials(tt.remote), "%q", tt.remote)
+		t.Run(tt.remote, func(t *testing.T) {
+			got := api.RepoAddress(tt.remote)
+			require.Equal(t, tt.want, got)
+			require.Equal(t, got, api.RepoAddress(got), "an address is its own address")
+		})
+	}
+}
+
+func TestRepoAddressDropsWhatACloneAddedToAuthenticate(t *testing.T) {
+	tests := []struct{ remote, want string }{
+		{"https://x-access-token:secret-for-test@github.com/o/r.git", "github.com/o/r"},
+		{"https://oauth2:secret-for-test@gitlab.com/o/r.git", "gitlab.com/o/r"},
+		{"https://token-as-user-for-test@dev.azure.com/org/p/_git/r", "dev.azure.com/org/p/_git/r"},
+		{"http://x-access-token:secret-for-test@git.internal/o/r.git", "git.internal/o/r"},
+		{"ssh://git:secret-for-test@example.com/o/r.git", "example.com/o/r"},
+		{"https://deploy:my^secret-for-test@git.example.com/o/r.git", "git.example.com/o/r"},
+		{"https://deploy:pässword-for-test@git.example.com/o/r.git", "git.example.com/o/r"},
+		{"ssh://git:my|secret-for-test@example.com/o/r.git", "example.com/o/r"},
+		{"HTTPS://token-as-user-for-test@github.com/o/r.git", "github.com/o/r"},
+		{"https://deploy:p@ss-for-test@git.example.com/o/r.git?x=a@b", "git.example.com/o/r"},
+		{"https://token-as-user-for-test@git.example.com", ""},
+	}
+	for _, tt := range tests {
+		got := api.RepoAddress(tt.remote)
+		require.Equal(t, tt.want, got, "%q", tt.remote)
+		require.NotContains(t, got, "for-test", "%q", tt.remote)
 	}
 }
 

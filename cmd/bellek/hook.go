@@ -228,16 +228,16 @@ func (r *hookRunner) sessionStart(ctx context.Context, in hookInput) error {
 	return nil
 }
 
-var errNoRepository = errors.New("not a git repository")
+var errNoRepository = errors.New("not a git repository with a remote")
 
 func (r *hookRunner) newSession(ctx context.Context, in hookInput) (*api.SessionStartResult, error) {
 	host, _ := os.Hostname()
 	loc := r.location(ctx, in.Cwd)
-	if loc.RepoRoot == "" && loc.RepoRemote == "" {
+	if loc.RepoRemote == "" {
 		return nil, errNoRepository
 	}
 	harness, _ := api.CanonicalUUID(in.SessionID)
-	started, err := r.api.SessionStart(ctx, api.SessionStartInput{Cwd: loc.Cwd, RepoRemote: loc.RepoRemote, RepoRoot: loc.RepoRoot, AgentKind: "claudeCode", AgentID: host, Branch: loc.Branch, MaxTokens: r.cfg.BriefTokens, HarnessSessionID: harness})
+	started, err := r.api.SessionStart(ctx, api.SessionStartInput{Cwd: loc.Cwd, RepoRemote: loc.RepoRemote, AgentKind: "claudeCode", AgentID: host, Branch: loc.Branch, MaxTokens: r.cfg.BriefTokens, HarnessSessionID: harness})
 	if err != nil {
 		return nil, err
 	}
@@ -250,16 +250,14 @@ func (r *hookRunner) restart(ctx context.Context, in hookInput) (*api.SessionSta
 	return r.newSession(ctx, in)
 }
 
-// Without a remote the server resolves the project by path, so every worktree reports the main one.
 func (r *hookRunner) location(ctx context.Context, cwd string) api.SessionLocationInput {
 	loc := api.SessionLocationInput{
 		Cwd:        redact.Text(cwd, 0),
-		RepoRemote: redact.Text(r.remote(ctx, cwd), 0),
+		RepoRemote: redact.Text(api.RepoAddress(r.remote(ctx, cwd)), 0),
 		Branch:     redact.Text(r.branch(ctx, cwd), 0),
 	}
 	if roots := r.worktrees(ctx, cwd); len(roots) > 0 {
 		loc.Cwd = redact.Text(roots[0], 0)
-		loc.RepoRoot = loc.Cwd
 	}
 	return loc
 }

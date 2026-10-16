@@ -24,7 +24,7 @@ type objectSchema struct {
 	Properties map[string]property `json:"properties"`
 }
 
-var locals = mcpbridge.Locals{Cwd: "/here", RepoRemote: "git@github.com:acme/widgets.git", Branch: "dev"}
+var locals = mcpbridge.Locals{Cwd: "/here", RepoRemote: "github.com/acme/widgets", Branch: "dev"}
 
 func TestFillReadsSchemasThatAreNotMaps(t *testing.T) {
 	tests := []struct {
@@ -80,7 +80,7 @@ func TestFillSkipsEmptyLocals(t *testing.T) {
 }
 
 func TestFillAddsTheLocalsEachToolTakesAndNothingElse(t *testing.T) {
-	all := mcpbridge.Locals{Cwd: "/here", RepoRemote: "git@github.com:acme/widgets.git", RepoRoot: "/repo", Branch: "dev"}
+	all := mcpbridge.Locals{Cwd: "/here", RepoRemote: "github.com/acme/widgets", Branch: "dev"}
 	tests := []struct {
 		name   string
 		schema map[string]any
@@ -88,13 +88,13 @@ func TestFillAddsTheLocalsEachToolTakesAndNothingElse(t *testing.T) {
 	}{
 		{
 			"session_start, without the agentKind only the caller knows",
-			object("agentKind", "agentId", "projectKey", "cwd", "repoRemote", "repoRoot", "branch", "maxTokens", "harnessSessionId"),
-			map[string]any{"cwd": all.Cwd, "repoRemote": all.RepoRemote, "repoRoot": all.RepoRoot, "branch": all.Branch},
+			object("agentKind", "agentId", "projectKey", "cwd", "repoRemote", "branch", "maxTokens", "harnessSessionId"),
+			map[string]any{"cwd": all.Cwd, "repoRemote": all.RepoRemote, "branch": all.Branch},
 		},
 		{
 			"memory_get, which takes no branch",
-			object("key", "kind", "depth", "asOf", "cwd", "projectKey", "repoRemote", "repoRoot"),
-			map[string]any{"cwd": all.Cwd, "repoRemote": all.RepoRemote, "repoRoot": all.RepoRoot},
+			object("key", "kind", "depth", "asOf", "cwd", "projectKey", "repoRemote"),
+			map[string]any{"cwd": all.Cwd, "repoRemote": all.RepoRemote},
 		},
 	}
 	for _, tt := range tests {
@@ -166,17 +166,12 @@ func TestLocalsFromReadsTheGitRepository(t *testing.T) {
 
 	got := mcpbridge.LocalsFrom(dir)
 	require.Equal(t, dir, got.Cwd)
-	require.Equal(t, "https://example.com/acme/Widgets.git", got.RepoRemote)
+	require.Equal(t, "example.com/acme/widgets", got.RepoRemote)
 	require.Equal(t, "trunk", got.Branch)
-	root, err := filepath.EvalSymlinks(dir)
-	require.NoError(t, err)
-	gotRoot, err := filepath.EvalSymlinks(got.RepoRoot)
-	require.NoError(t, err)
-	require.Equal(t, root, gotRoot)
 
 	sub := filepath.Join(dir, "cmd")
 	require.NoError(t, os.MkdirAll(sub, 0o755))
-	require.Equal(t, got.RepoRoot, mcpbridge.LocalsFrom(sub).RepoRoot, "a directory inside the repository has the same root")
+	require.Equal(t, got.RepoRemote, mcpbridge.LocalsFrom(sub).RepoRemote, "a directory inside the repository has the same address")
 }
 
 func TestLocalsFromOutsideAGitRepository(t *testing.T) {
@@ -184,7 +179,6 @@ func TestLocalsFromOutsideAGitRepository(t *testing.T) {
 	got := mcpbridge.LocalsFrom(dir)
 	require.Equal(t, dir, got.Cwd)
 	require.Empty(t, got.RepoRemote)
-	require.Empty(t, got.RepoRoot)
 	require.Empty(t, got.Branch)
 
 	empty := mcpbridge.LocalsFrom("")
@@ -206,19 +200,19 @@ func TestFillReadsTheGitStateOfTheCallersOwnCwd(t *testing.T) {
 
 	args, err := mcpbridge.Fill(schema, json.RawMessage(`{"cwd":"`+dir+`"}`), locals)
 	require.NoError(t, err)
-	require.Equal(t, "https://example.com/acme/other.git", args["repoRemote"], "not the remote of the bridge's own checkout")
+	require.Equal(t, "example.com/acme/other", args["repoRemote"], "not the remote of the bridge's own checkout")
 	require.Equal(t, "feature", args["branch"])
 
-	args, err = mcpbridge.Fill(schema, json.RawMessage(`{"cwd":"`+dir+`","repoRemote":"git@given"}`), locals)
+	args, err = mcpbridge.Fill(schema, json.RawMessage(`{"cwd":"`+dir+`","repoRemote":"git@github.com:acme/given.git"}`), locals)
 	require.NoError(t, err)
-	require.Equal(t, "git@given", args["repoRemote"], "a value the caller sent still wins")
+	require.Equal(t, "github.com/acme/given", args["repoRemote"], "a value the caller sent still wins")
 }
 
 func TestFillStripsCredentialsFromARemoteTheCallerSent(t *testing.T) {
 	schema := map[string]any{"type": "object", "properties": map[string]any{"repoRemote": map[string]any{}}}
 	args, err := mcpbridge.Fill(schema, json.RawMessage(`{"repoRemote":"https://x-access-token:ghs_secret@github.com/acme/app.git"}`), locals)
 	require.NoError(t, err)
-	require.Equal(t, "https://github.com/acme/app.git", args["repoRemote"])
+	require.Equal(t, "github.com/acme/app", args["repoRemote"])
 }
 
 func TestLocalsAreRedactedLikeTheHookLocation(t *testing.T) {

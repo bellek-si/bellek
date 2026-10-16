@@ -33,7 +33,7 @@ func refuse(text string) mcp.ToolHandler {
 
 func newRemote() *mcp.Server {
 	srv := mcp.NewServer(&mcp.Implementation{Name: "remote", Version: "test"}, &mcp.ServerOptions{Instructions: "Search before you edit."})
-	srv.AddTool(&mcp.Tool{Name: "session_start", Description: "Start a session.", InputSchema: object("agentKind", "agentId", "projectKey", "cwd", "repoRemote", "repoRoot", "branch")}, echo)
+	srv.AddTool(&mcp.Tool{Name: "session_start", Description: "Start a session.", InputSchema: object("agentKind", "agentId", "projectKey", "cwd", "repoRemote", "branch")}, echo)
 	srv.AddTool(&mcp.Tool{Name: "memory_briefing", Description: "Read the briefing.", InputSchema: object("sessionId"),
 		Annotations: &mcp.ToolAnnotations{ReadOnlyHint: true, IdempotentHint: true}}, echo)
 	srv.AddTool(&mcp.Tool{Name: "task_next", Description: "List the next tasks.", InputSchema: object("cwd", "repoRemote")}, echo)
@@ -59,7 +59,7 @@ func bridged(t *testing.T) *mcp.ClientSession {
 	t.Helper()
 	ctx := context.Background()
 	remote := connect(t, newRemote(), "bridge")
-	local, err := mcpbridge.New(ctx, remote, mcpbridge.Locals{Cwd: "/client/repo", RepoRemote: "git@github.com:acme/bridged.git", Branch: "main"}, "test")
+	local, err := mcpbridge.New(ctx, remote, mcpbridge.Locals{Cwd: "/client/repo", RepoRemote: "github.com/acme/bridged", Branch: "main"}, "test")
 	require.NoError(t, err)
 	return connect(t, local, "agent")
 }
@@ -108,14 +108,14 @@ func TestBridgeSendsTheRepoRemoteOfItsCheckout(t *testing.T) {
 	res, err := cs.CallTool(ctx, &mcp.CallToolParams{Name: "session_start", Arguments: map[string]any{"agentKind": "codex"}})
 	require.NoError(t, err)
 	require.False(t, res.IsError)
-	require.Equal(t, "git@github.com:acme/bridged.git", payload(t, res)["repoRemote"], "the server names the project after the remote of the client's checkout")
+	require.Equal(t, "github.com/acme/bridged", payload(t, res)["repoRemote"], "the server names the project after the remote of the client's checkout")
 
 	res, err = cs.CallTool(ctx, &mcp.CallToolParams{Name: "session_start", Arguments: map[string]any{"agentKind": "codex", "projectKey": "bridged"}})
 	require.NoError(t, err)
 	require.False(t, res.IsError, res.Content[0].(*mcp.TextContent).Text)
 	got := payload(t, res)
 	require.Equal(t, "bridged", got["projectKey"])
-	require.Equal(t, "git@github.com:acme/bridged.git", got["repoRemote"])
+	require.Equal(t, "github.com/acme/bridged", got["repoRemote"])
 }
 
 func TestFillOnlyAddsMissingKnownKeys(t *testing.T) {
