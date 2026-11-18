@@ -26,9 +26,7 @@ func WithLogger(log *zap.SugaredLogger) Option {
 }
 
 type Locals struct {
-	Cwd        string
 	RepoRemote string
-	RepoRoot   string
 	Branch     string
 }
 
@@ -37,18 +35,12 @@ func LocalsFrom(cwd string) Locals {
 }
 
 func localsAt(ctx context.Context, cwd string) Locals {
-	l := Locals{Cwd: redact.Text(cwd, 0), RepoRemote: redact.Text(gitinfo.Remote(ctx, cwd), 0), Branch: redact.Text(gitinfo.Branch(ctx, cwd), 0)}
-	if roots := gitinfo.Worktrees(ctx, cwd); len(roots) > 0 {
-		l.RepoRoot = redact.Text(roots[0], 0)
-	}
-	return l
+	return Locals{RepoRemote: redact.Text(gitinfo.Remote(ctx, cwd), 0), Branch: redact.Text(gitinfo.Branch(ctx, cwd), 0)}
 }
-
-const callerGitTimeout = time.Second
 
 func (l Locals) values() map[string]string {
 	raw, _ := json.Marshal(api.SessionStartArgs{
-		ScopeArgs: api.ScopeArgs{Cwd: l.Cwd, RepoRemote: l.RepoRemote, RepoRoot: l.RepoRoot},
+		ScopeArgs: api.ScopeArgs{RepoRemote: l.RepoRemote},
 		Branch:    l.Branch,
 	})
 	var fields map[string]any
@@ -91,11 +83,7 @@ func New(ctx context.Context, remote *mcp.ClientSession, locals Locals, version 
 	for _, tool := range list.Tools {
 		srv.AddTool(&mcp.Tool{Name: tool.Name, Description: tool.Description, InputSchema: tool.InputSchema, Annotations: tool.Annotations},
 			func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-				args, err := fill(tool.InputSchema, req.Params.Arguments, locals, func(cwd string) Locals {
-					ctx, cancel := context.WithTimeout(ctx, callerGitTimeout)
-					defer cancel()
-					return localsAt(ctx, cwd)
-				})
+				args, err := fill(tool.InputSchema, req.Params.Arguments, locals)
 				if err != nil {
 					return nil, err
 				}
@@ -126,7 +114,7 @@ func firstText(res *mcp.CallToolResult) string {
 	return "unknown"
 }
 
-func fill(schema any, raw json.RawMessage, locals Locals, locate func(cwd string) Locals) (map[string]any, error) {
+func fill(schema any, raw json.RawMessage, locals Locals) (map[string]any, error) {
 	args := map[string]any{}
 	if len(raw) > 0 {
 		if err := json.Unmarshal(raw, &args); err != nil {
@@ -136,10 +124,6 @@ func fill(schema any, raw json.RawMessage, locals Locals, locate func(cwd string
 	// JSON null leaves the map nil.
 	if args == nil {
 		args = map[string]any{}
-	}
-	var caller api.ScopeArgs
-	if json.Unmarshal(raw, &caller) == nil && caller.Cwd != "" && caller.Cwd != locals.Cwd {
-		locals = locate(caller.Cwd)
 	}
 	props := schemaProperties(schema)
 	for key, value := range locals.values() {
@@ -152,7 +136,7 @@ func fill(schema any, raw json.RawMessage, locals Locals, locate func(cwd string
 		args[key] = value
 	}
 	if remote, ok := args["repoRemote"].(string); ok {
-		args["repoRemote"] = api.RemoteWithoutCredentials(remote)
+		args["repoRemote"] = api.RepoAddress(remote)
 	}
 	return args, nil
 }
