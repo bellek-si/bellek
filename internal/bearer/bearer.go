@@ -7,9 +7,10 @@ import (
 	"github.com/bellek-si/bellek/api"
 )
 
-// Transport sends the key and the client version to the host of the base URL only. A header set on the
-// request itself would follow a redirect to a subdomain of that host, or to the
-// same host name on another port, because net/http copies it there.
+// Transport sends the key and the client version to the host of the base URL
+// only. A header set on the request itself would follow a redirect to a
+// subdomain of that host, or to the same host name on another port, because
+// net/http copies it there.
 type Transport struct {
 	token     string
 	userAgent string

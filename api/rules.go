@@ -105,10 +105,7 @@ func ClientVersion(userAgent string) string {
 		return ""
 	}
 	version, _, _ := strings.Cut(rest, " ")
-	if version == "" || len(version) > 64 {
-		return ""
-	}
-	if strings.ContainsFunc(version, notVersionText) {
+	if len(version) > 64 || strings.ContainsFunc(version, notVersionText) {
 		return ""
 	}
 	return version
