@@ -181,12 +181,15 @@ type Event struct {
 	CreatedAt time.Time      `json:"createdAt"`
 }
 
+// ProjectKey is set only when the node lives in another project than the one
+// the answer is about.
 type Ref struct {
-	Kind   Kind   `json:"kind"`
-	Key    string `json:"key"`
-	Ref    string `json:"ref,omitempty"`
-	Title  string `json:"title"`
-	Status string `json:"status"`
+	Kind       Kind   `json:"kind"`
+	Key        string `json:"key"`
+	Ref        string `json:"ref,omitempty"`
+	Title      string `json:"title"`
+	Status     string `json:"status"`
+	ProjectKey string `json:"projectKey,omitempty"`
 }
 
 func (r Ref) Label() string { return label(r.Ref, r.Key) }

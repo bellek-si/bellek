@@ -1,7 +1,7 @@
 package api
 
 // Instructions is what the MCP server sends a client when it connects.
-const Instructions = "Bellek is the shared memory for this project. With the Bellek hooks installed the session is already started and its briefing is already in context; the session id is in that context. Search with memory_search or memory_get before touching a task or a file. When the user asks for a piece of work, or you pull tasks from a tracker such as Linear or Jira, create each one with task_upsert, link related work with parentKey and dependsOn, and claim the one you start with task_claim, which returns its briefing; a claim leaves the status alone, so move a todo task to inProgress with task_status. Do all three before your first edit, even for a small one line request. Every task has an id, the project key and a number such as widgets-12; use it when you name a task to the user, and pass it wherever a task key goes. Record decisions, lessons and open questions with memory_note. Move the task with task_status: done when finished, review when it needs a look, blocked with the reason, cancelled when dropped; task_handoff when you stop mid task. When you move a task to done or review, write a memory_note tagged report with key <task key>-report and relatedKey the task, with the headings ## What, ## Why, ## Changes and ## Conclusion. Other sessions are listed in the briefing with their key and focus; a live Claude Code peer is reached with SendMessage by its name, any other session with memory_signal to its key, and a request signal arrives on that session's next prompt; answer one with kind response and the same threadId. Call session_start, then memory_briefing, only when no briefing is in context, and session_end only if you called session_start."
+const Instructions = "Bellek is the shared memory for this project. With the Bellek hooks installed the session is already started and its briefing is already in context; the session id is in that context. Search with memory_search or memory_get before touching a task or a file. When the user points at earlier work, search for it first with one or two of their own words, not a guess at a tool or product name, and try other words before you conclude nothing is recorded. When the user asks for a piece of work, or you pull tasks from a tracker such as Linear or Jira, create each one with task_upsert, link related work with parentKey and dependsOn, and claim the one you start with task_claim, which returns its briefing; a claim leaves the status alone, so move a todo task to inProgress with task_status. Do all three before your first edit, even for a small one line request. Every task has an id, the project key and a number such as widgets-12; use it when you name a task to the user, and pass it wherever a task key goes. Record decisions, lessons and open questions with memory_note. Move the task with task_status: done when finished, review when it needs a look, blocked with the reason, cancelled when dropped; task_handoff when you stop mid task. When you move a task to done or review, write a memory_note tagged report with key <task key>-report and relatedKey the task, with the headings ## What, ## Why, ## Changes and ## Conclusion. Other sessions are listed in the briefing with their key and focus; a live Claude Code peer is reached with SendMessage by its name, any other session with memory_signal to its key, and a request signal arrives on that session's next prompt; answer one with kind response and the same threadId. Call session_start, then memory_briefing, only when no briefing is in context, and session_end only if you called session_start."
 
 // Tool is an MCP tool; ReadOnly sets its MCP read only hint.
 type Tool struct {
@@ -14,8 +14,8 @@ var (
 	ToolSessionStart = Tool{Name: "session_start", Description: "Start a session and get the briefing. Call this first."}
 	ToolSessionEnd   = Tool{Name: "session_end", Description: "End the session, hand off claimed tasks, release leases."}
 	ToolBriefing     = Tool{Name: "memory_briefing", Description: "What matters now: your claims, blocked tasks, signals, handoffs, decisions, frontier, other sessions.", ReadOnly: true}
-	ToolGet          = Tool{Name: "memory_get", Description: "Get a node with its neighbors and recent events.", ReadOnly: true}
-	ToolSearch       = Tool{Name: "memory_search", Description: "Full text search with one hop of related nodes.", ReadOnly: true}
+	ToolGet          = Tool{Name: "memory_get", Description: "Get one node in full, with the titles of its neighbors and its recent events.", ReadOnly: true}
+	ToolSearch       = Tool{Name: "memory_search", Description: "Search the project's memory by words, with one hop of related nodes. A word also matches its plural and verb forms. When no record holds every word, the hits hold some of them, and the result names the words nothing holds and the other projects that answer. A hit carries a snippet; memory_get reads it in full.", ReadOnly: true}
 	ToolNote         = Tool{Name: "memory_note", Description: "Write a note or decision. It is linked to related work automatically. The user may later accept, discard, answer or promote it, and a discarded note drops out of search and the briefing."}
 	ToolSignal       = Tool{Name: "memory_signal", Description: "Send a message to another session or attach it to a task."}
 	ToolTaskUpsert   = Tool{Name: "task_upsert", Description: "Create or update a task. Create one for each piece of work the user asks for or you pull from a tracker, before your first edit, with parentKey and dependsOn for related work."}
@@ -31,7 +31,7 @@ var Tools = []Tool{
 }
 
 type ScopeArgs struct {
-	ProjectKey string `json:"projectKey,omitempty" jsonschema:"explicit project key, overrides repoRemote"`
+	ProjectKey string `json:"projectKey,omitempty" jsonschema:"explicit project key, overrides repoRemote; set it to read a project a search named"`
 	RepoRemote string `json:"repoRemote,omitempty" jsonschema:"git remote url or address of the repository, filled by the bridge"`
 }
 
@@ -56,7 +56,7 @@ type GetArgs struct {
 
 type SearchArgs struct {
 	ScopeArgs
-	Q       string   `json:"q" jsonschema:"search text"`
+	Q       string   `json:"q" jsonschema:"one or two words the user used; every extra word narrows the search"`
 	Kinds   []string `json:"kinds,omitempty" jsonschema:"restrict text hits to these kinds; session finds who worked on something"`
 	Limit   int      `json:"limit,omitempty" jsonschema:"max text hits, default 20, at most 100"`
 	After   string   `json:"after,omitempty" jsonschema:"RFC3339, only nodes updated after this time"`
