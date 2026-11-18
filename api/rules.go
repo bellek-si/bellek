@@ -88,3 +88,32 @@ func OneLine(s string) string {
 		return r
 	}, s))
 }
+
+const userAgentProduct = "bellek/"
+
+// UserAgent is the User-Agent header the client sends, so the server can log
+// which release made a request.
+func UserAgent(version string) string {
+	return userAgentProduct + version
+}
+
+// ClientVersion reads the version back from a User-Agent header. Another
+// client, or a version that is not plain version text, gives "".
+func ClientVersion(userAgent string) string {
+	rest, ok := strings.CutPrefix(userAgent, userAgentProduct)
+	if !ok {
+		return ""
+	}
+	version, _, _ := strings.Cut(rest, " ")
+	if len(version) > 64 || strings.ContainsFunc(version, notVersionText) {
+		return ""
+	}
+	return version
+}
+
+func notVersionText(r rune) bool {
+	if r > unicode.MaxASCII {
+		return true
+	}
+	return !unicode.IsLetter(r) && !unicode.IsDigit(r) && !strings.ContainsRune(".-+_", r)
+}

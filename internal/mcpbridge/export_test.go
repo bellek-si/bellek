@@ -10,5 +10,5 @@ func Fill(schema any, raw json.RawMessage, locals Locals) (map[string]any, error
 }
 
 func HTTPClient(baseURL, token string) *http.Client {
-	return transport(baseURL, token).HTTPClient
+	return transport(baseURL, token, "test").HTTPClient
 }

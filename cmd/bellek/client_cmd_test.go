@@ -314,6 +314,32 @@ func TestMCPCommandBridgesTheServerAndLeavesStdoutToTheProtocol(t *testing.T) {
 	require.NotZero(t, s.requested("POST /mcp"), "the bridge read the server's tools with the key")
 }
 
+func TestEveryCommandNamesItsVersionToTheServer(t *testing.T) {
+	setConfigEnv(t)
+	resetFlags(t, importCmd)
+	withVersion(t, "v9.8.7")
+	s := serveFake(t)
+	empty, err := os.Open(os.DevNull)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = empty.Close() })
+	stdin := os.Stdin
+	os.Stdin = empty
+	t.Cleanup(func() { os.Stdin = stdin })
+
+	_, err = run(t, "doctor")
+	require.NoError(t, err)
+	_, err = run(t, "import", "--project", "demo", "--from", writeDocs(t, 1, func(int) string { return "---\nkind: note\nkey: n\ntitle: N\n---\n" }))
+	require.NoError(t, err)
+	captureStd(t, func() {
+		_, err := run(t, "mcp")
+		require.NoError(t, err)
+	})
+
+	for _, request := range []string{"GET /v1/health", "GET /v1/doctor", "POST /v1/projects/demo/import", "POST /mcp"} {
+		require.Equal(t, "v9.8.7", api.ClientVersion(s.agent(request)), request)
+	}
+}
+
 func TestExportCommandWritesEveryPage(t *testing.T) {
 	setConfigEnv(t)
 	resetFlags(t, exportCmd)

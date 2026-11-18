@@ -37,6 +37,7 @@ type fakeServer struct {
 	notice   string
 	stored   map[string]map[string]api.ImportDoc
 	requests []string
+	agents   map[string]string
 }
 
 func serveFake(t *testing.T) *fakeServer {
@@ -51,6 +52,7 @@ func serveFake(t *testing.T) *fakeServer {
 		exports: map[string][]*api.Node{},
 		reports: map[string]string{},
 		stored:  map[string]map[string]api.ImportDoc{},
+		agents:  map[string]string{},
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /v1/me", s.serveMe)
@@ -62,6 +64,7 @@ func serveFake(t *testing.T) *fakeServer {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		s.mu.Lock()
 		s.requests = append(s.requests, r.Method+" "+r.URL.Path)
+		s.agents[r.Method+" "+r.URL.Path] = r.Header.Get("User-Agent")
 		health := s.health
 		s.mu.Unlock()
 		if r.URL.Path == "/v1/health" {
@@ -111,6 +114,12 @@ func (s *fakeServer) requested(want string) int {
 		}
 	}
 	return n
+}
+
+func (s *fakeServer) agent(request string) string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.agents[request]
 }
 
 func (s *fakeServer) serveMe(w http.ResponseWriter, _ *http.Request) {

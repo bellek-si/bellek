@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bellek-si/bellek/api"
 	"github.com/bellek-si/bellek/internal/mcpbridge"
 	"github.com/stretchr/testify/require"
 )
@@ -232,4 +233,17 @@ func TestTheKeyGoesToTheServerHostOnly(t *testing.T) {
 	require.NoError(t, res.Body.Close())
 	require.Equal(t, "Bearer bk_secret", own)
 	require.Empty(t, elsewhere, "a redirect to another host does not carry the key")
+}
+
+func TestTheBridgeNamesItsVersionToTheServer(t *testing.T) {
+	var agent string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		agent = r.Header.Get("User-Agent")
+	}))
+	t.Cleanup(server.Close)
+
+	res, err := mcpbridge.HTTPClient(server.URL, "bk_secret").Get(server.URL + "/mcp")
+	require.NoError(t, err)
+	require.NoError(t, res.Body.Close())
+	require.Equal(t, "test", api.ClientVersion(agent))
 }
