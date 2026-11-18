@@ -103,7 +103,7 @@ func TestHookPromptNamesRelatedNodesAndUnreadSignals(t *testing.T) {
 	f.run(t, "prompt", hookInput{SessionID: "c", Cwd: "/repo", Prompt: "fix ErrTokenExpired in internal/auth.go"})
 	got := f.answer(t, "UserPromptSubmit")
 	other := f.session(t, "other")
-	require.Contains(t, got, "Only when there is something real to record. Related: task repo-1 auth-refresh (todo), decision use-refresh-tokens. Signal from session "+other.Key+", info: look at auth.")
+	require.Contains(t, got, "Only when there is something real to record. Related: task repo-1 auth-refresh (todo), decision use-refresh-tokens. Read them with memory_get before you start. Signal from session "+other.Key+", info: look at auth.")
 	require.Len(t, marker(f.state, "c").Signals, 1, "the printed signal waits for the next prompt's acknowledgement")
 
 	f.api.prompt.Related = nil
@@ -113,6 +113,14 @@ func TestHookPromptNamesRelatedNodesAndUnreadSignals(t *testing.T) {
 	require.NotContains(t, got, "Signal from", "acknowledged by this prompt, so it is read and gone")
 	require.Empty(t, marker(f.state, "c").Signals)
 	require.Empty(t, f.session(t, "c").unread)
+}
+
+func TestJoinRefsNamesTheProjectOfANodeFromElsewhere(t *testing.T) {
+	got := joinRefs([]api.Ref{
+		{Kind: api.KindTask, Key: "central-logs", Ref: "charts-2", Status: "review", ProjectKey: "charts"},
+		{Kind: api.KindDecision, Key: "log-stack", ProjectKey: "charts"},
+	}, ", ")
+	require.Equal(t, "task charts-2 central-logs (review, project charts), decision log-stack (project charts)", got)
 }
 
 func TestHookPromptRelatedLineCanBeTurnedOff(t *testing.T) {
