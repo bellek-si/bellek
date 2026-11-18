@@ -13,6 +13,7 @@ This repository holds the `bellek` command, the Claude Code plugin and the hook 
 
 ## Rules
 
+- This repository is public. Never put anything confidential in the code, the docs, a commit, a pull request, an issue or a release note: no secrets, internal hostnames, account ids, customer names, or details of private repositories.
 - Tests run against fakes: `httptest` handlers for `client`, a recording fake of `hookAPI` for the hooks, a small go-sdk server for the MCP bridge.
 - Only `api` and `client` are importable by other modules. Their Go API may change in any v0 release; the JSON they send and read may not, see the next rule.
 - `api` defines the wire: the `/v1` and MCP shapes, the enums, limits and error codes, the MCP tools and `Instructions`, and the rules both ends apply, such as `OneLine`. Define each once there and never copy it. The client must work with a server that does not know a new field yet, and ignore fields it does not know.

@@ -68,6 +68,35 @@ bellek doctor
 
 It names the key, its user and its workspace, and the client and server versions.
 
+## Upgrade
+
+The command and the plugin are upgraded separately. Upgrade both, the command first.
+
+Upgrade `bellek` the way you installed it:
+
+```bash
+brew update && brew upgrade bellek-si/tap/bellek              # Homebrew
+go install github.com/bellek-si/bellek/cmd/bellek@latest      # Go
+```
+
+On Linux with the release binary, run the download steps of [Install `bellek`](#1-install-bellek) again: they always fetch the latest release and replace the old binary.
+
+Then upgrade the plugin:
+
+```bash
+claude plugin marketplace update bellek
+claude plugin update bellek@bellek
+```
+
+Restart Claude Code so running sessions pick up the new hooks. Your API key and settings stay as they are. To check the result:
+
+```bash
+bellek version
+bellek doctor
+```
+
+`bellek doctor` says so when the command is older than the oldest version the server supports.
+
 ## Commands
 
 | Command | What it does |
@@ -83,22 +112,7 @@ It names the key, its user and its workspace, and the client and server versions
 
 Commands print their output on stdout and log on stderr. [docs/markdown.md](docs/markdown.md) describes the export and import formats.
 
-## Configuration
-
-`bellek` reads its settings from the environment only, never from a file, so the key Claude Code passes decides the workspace.
-
-| Variable | Default | Meaning |
-|---|---|---|
-| `BELLEK_TOKEN` | none, required | An API key, which starts with `bk_` |
-| `BELLEK_CAPTURE` | `prompts,files,progress,memory` | What the hooks record. Empty turns these four off; session start, location, the checkpoint note and session end still run, see [docs/privacy.md](docs/privacy.md) |
-| `BELLEK_CAPTURE_IGNORE` | `.env*,*.pem,*.key,*lock*,id_rsa*,id_dsa*,id_ecdsa*,id_ed25519*,.netrc,.npmrc,.pypirc,credentials,*credentials.json,.git-credentials` | Path globs the hooks never record. Empty ignores nothing |
-| `BELLEK_MEMORY_DIRS` | empty | Extra Claude Code memory folders to sync, comma separated |
-| `BELLEK_RECALL` | `briefing,prompt,files` | What the hooks put in front of the model. Empty turns all three off |
-| `BELLEK_BRIEF_TOKENS` | `800` | Size of the briefing at session start |
-| `BELLEK_STATE_DIR` | `$XDG_STATE_HOME/bellek`, else `~/.local/state/bellek` | Where the hooks keep their state |
-| `LOG_LEVEL` | `info` | Log level on stderr. `warn` stops the MCP bridge from logging every tool call |
-
-[docs/hooks.md](docs/hooks.md) explains each hook and each setting, and [docs/mcp.md](docs/mcp.md) the MCP tools.
+`bellek` reads its settings from the environment: [docs/configuration.md](docs/configuration.md) lists each variable and its default. [docs/hooks.md](docs/hooks.md) explains each hook, and [docs/mcp.md](docs/mcp.md) the MCP tools.
 
 ## Development
 
