@@ -17,7 +17,7 @@ func (r *recorder) RoundTrip(req *http.Request) (*http.Response, error) {
 
 func TestTransportSendsTheKeyToItsOwnHostOnly(t *testing.T) {
 	var sent recorder
-	tr := bearer.New("https://bellek.example/base", "bk_key", &sent)
+	tr := bearer.New("https://bellek.example/base", "bk_key", "v1.2.3", &sent)
 	for _, u := range []string{"https://bellek.example/v1/me", "https://api.bellek.example/v1/me", "https://bellek.example:8443/v1/me", "https://evil.example/v1/me"} {
 		req, err := http.NewRequest(http.MethodGet, u, nil)
 		require.NoError(t, err)
@@ -31,11 +31,31 @@ func TestTransportSendsTheKeyToItsOwnHostOnly(t *testing.T) {
 
 func TestTransportWithABadBaseURLNeverSendsTheKey(t *testing.T) {
 	var sent recorder
-	tr := bearer.New("://not a url", "bk_key", &sent)
+	tr := bearer.New("://not a url", "bk_key", "v1.2.3", &sent)
 	req, err := http.NewRequest(http.MethodGet, "https://bellek.example/v1/me", nil)
 	require.NoError(t, err)
 	res, err := tr.RoundTrip(req)
 	require.NoError(t, err)
 	require.NoError(t, res.Body.Close())
 	require.Equal(t, recorder{"bellek.example "}, sent)
+}
+
+type agents []string
+
+func (a *agents) RoundTrip(req *http.Request) (*http.Response, error) {
+	*a = append(*a, req.Header.Get("User-Agent"))
+	return &http.Response{StatusCode: http.StatusNoContent, Body: http.NoBody, Request: req}, nil
+}
+
+func TestTransportNamesTheClientVersionToItsOwnHostOnly(t *testing.T) {
+	var sent agents
+	tr := bearer.New("https://bellek.example", "bk_key", "v1.2.3", &sent)
+	for _, u := range []string{"https://bellek.example/v1/me", "https://evil.example/v1/me"} {
+		req, err := http.NewRequest(http.MethodGet, u, nil)
+		require.NoError(t, err)
+		res, err := tr.RoundTrip(req)
+		require.NoError(t, err)
+		require.NoError(t, res.Body.Close())
+	}
+	require.Equal(t, agents{"bellek/v1.2.3", ""}, sent)
 }

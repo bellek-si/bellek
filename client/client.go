@@ -25,6 +25,7 @@ type Client struct {
 	token   string
 	http    *http.Client
 	timeout time.Duration
+	version string
 }
 
 type Option func(*Client)
@@ -32,6 +33,8 @@ type Option func(*Client)
 func WithHTTPClient(h *http.Client) Option { return func(c *Client) { c.http = h } }
 
 func WithTimeout(d time.Duration) Option { return func(c *Client) { c.timeout = d } }
+
+func WithVersion(v string) Option { return func(c *Client) { c.version = v } }
 
 // New never changes the http.Client given to WithHTTPClient, and the options
 // may come in any order.
@@ -48,7 +51,7 @@ func New(baseURL, token string, opts ...Option) *Client {
 	if next == nil {
 		next = http.DefaultTransport
 	}
-	h.Transport = bearer.New(c.base, token, next)
+	h.Transport = bearer.New(c.base, token, c.version, next)
 	c.http = &h
 	return c
 }

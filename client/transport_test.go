@@ -231,3 +231,14 @@ func TestSessionLocationPostsTheLocation(t *testing.T) {
 	require.NoError(t, c.SessionLocation(ctx, id, api.SessionLocationInput{RepoRemote: "github.com/acme/widgets"}))
 	require.JSONEq(t, `{"repoRemote":"github.com/acme/widgets"}`, body, "an empty branch is left out")
 }
+
+func TestEveryRequestNamesTheClientVersion(t *testing.T) {
+	var agent string
+	c := serving(t, func(w http.ResponseWriter, r *http.Request) {
+		agent = r.Header.Get("User-Agent")
+		_, _ = io.WriteString(w, `{"status":"ok"}`)
+	}, client.WithVersion("v1.2.3"))
+	_, err := c.Health(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, "v1.2.3", api.ClientVersion(agent))
+}

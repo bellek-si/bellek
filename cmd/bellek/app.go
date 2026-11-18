@@ -61,7 +61,7 @@ func (a *app) close() {
 
 func (a *app) client(opts ...client.Option) *client.Client {
 	url, token := a.remote()
-	return client.New(url, token, opts...)
+	return client.New(url, token, append([]client.Option{client.WithVersion(Version)}, opts...)...)
 }
 
 func (a *app) remote() (string, string) {

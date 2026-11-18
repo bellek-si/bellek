@@ -54,16 +54,16 @@ func (l Locals) values() map[string]string {
 	return values
 }
 
-func transport(baseURL, token string) *mcp.StreamableClientTransport {
+func transport(baseURL, token, version string) *mcp.StreamableClientTransport {
 	return &mcp.StreamableClientTransport{
 		Endpoint:             baseURL + "/mcp",
-		HTTPClient:           &http.Client{Transport: bearer.New(baseURL, token, http.DefaultTransport)},
+		HTTPClient:           &http.Client{Transport: bearer.New(baseURL, token, version, http.DefaultTransport)},
 		DisableStandaloneSSE: true,
 	}
 }
 
 func Connect(ctx context.Context, baseURL, token, version string) (*mcp.ClientSession, error) {
-	return mcp.NewClient(&mcp.Implementation{Name: "bellek-bridge", Version: version}, nil).Connect(ctx, transport(baseURL, token), nil)
+	return mcp.NewClient(&mcp.Implementation{Name: "bellek-bridge", Version: version}, nil).Connect(ctx, transport(baseURL, token, version), nil)
 }
 
 func New(ctx context.Context, remote *mcp.ClientSession, locals Locals, version string, opts ...Option) (*mcp.Server, error) {

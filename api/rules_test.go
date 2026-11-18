@@ -1,6 +1,7 @@
 package api_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/bellek-si/bellek/api"
@@ -86,4 +87,16 @@ func TestCanonicalUUIDKeepsOnlyTheFormClaudeResumeTakes(t *testing.T) {
 func TestOneLineTurnsEveryLineBreakIntoASpace(t *testing.T) {
 	got := api.OneLine(" a\nb\rc\td\u0085e\u2028f\u2029g\x00h\n")
 	require.Equal(t, "a b c d e f g h", got, "newline, return, tab, next line, line and paragraph separators and NUL")
+}
+
+func TestClientVersionReadsWhatUserAgentWrites(t *testing.T) {
+	require.Equal(t, "bellek/v0.4.0", api.UserAgent("v0.4.0"))
+	require.Equal(t, "v0.4.0", api.ClientVersion(api.UserAgent("v0.4.0")))
+	require.Equal(t, "v0.4.1-0.20261118084102-494794589976+dirty", api.ClientVersion("bellek/v0.4.1-0.20261118084102-494794589976+dirty extra/1"))
+}
+
+func TestClientVersionIsEmptyForAnotherClient(t *testing.T) {
+	for _, ua := range []string{"", "Go-http-client/1.1", "bellek", "bellek/", "notbellek/v1", "bellek/v1\nforged=line", "bellek/" + strings.Repeat("1", 65)} {
+		require.Empty(t, api.ClientVersion(ua), ua)
+	}
 }
