@@ -117,10 +117,10 @@ func TestHookPromptNamesRelatedNodesAndUnreadSignals(t *testing.T) {
 
 func TestJoinRefsNamesTheProjectOfANodeFromElsewhere(t *testing.T) {
 	got := joinRefs([]api.Ref{
-		{Kind: api.KindTask, Key: "central-logs", Ref: "charts-2", Status: "review", ProjectKey: "charts"},
-		{Kind: api.KindDecision, Key: "log-stack", ProjectKey: "charts"},
+		{Kind: api.KindTask, Key: "auth-refresh", Ref: "tools-2", Status: "review", ProjectKey: "tools"},
+		{Kind: api.KindDecision, Key: "use-refresh-tokens", ProjectKey: "tools"},
 	}, ", ")
-	require.Equal(t, "task charts-2 central-logs (review, project charts), decision log-stack (project charts)", got)
+	require.Equal(t, "task tools-2 auth-refresh (review, project tools), decision use-refresh-tokens (project tools)", got)
 }
 
 func TestHookPromptRelatedLineCanBeTurnedOff(t *testing.T) {
