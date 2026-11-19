@@ -32,7 +32,7 @@ func TestLoadDefaults(t *testing.T) {
 	require.True(t, cfg.Captures("files"))
 	require.False(t, cfg.Captures("thoughts"), "an unknown stream is never captured")
 	require.Equal(t, []string{"briefing", "prompt", "files"}, cfg.Recall)
-	require.Equal(t, 800, cfg.BriefTokens)
+	require.Equal(t, 4000, cfg.BriefTokens)
 	require.True(t, cfg.Recalls("prompt"))
 }
 
