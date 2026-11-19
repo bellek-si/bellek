@@ -43,7 +43,7 @@ func (a SessionArgs) Session() string { return a.SessionID }
 
 type BriefingArgs struct {
 	SessionArgs
-	MaxTokens int `json:"maxTokens,omitempty" jsonschema:"token budget, default 2000"`
+	MaxTokens int `json:"maxTokens,omitempty" jsonschema:"token budget, default 4000"`
 }
 
 type GetArgs struct {
@@ -130,7 +130,7 @@ type SessionStartArgs struct {
 	AgentKind        string `json:"agentKind" jsonschema:"claudeCode, codex, cursor or custom"`
 	AgentID          string `json:"agentId,omitempty" jsonschema:"machine or harness name"`
 	Branch           string `json:"branch,omitempty"`
-	MaxTokens        int    `json:"maxTokens,omitempty" jsonschema:"briefing budget in tokens, default 2000"`
+	MaxTokens        int    `json:"maxTokens,omitempty" jsonschema:"briefing budget in tokens, default 4000"`
 	HarnessSessionID string `json:"harnessSessionId,omitempty" jsonschema:"the harness own session id, a uuid, so the session page can print a resume command"`
 }
 

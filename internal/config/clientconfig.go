@@ -29,7 +29,7 @@ const (
 	DefaultCapture       = "prompts,files,progress,memory"
 	DefaultCaptureIgnore = ".env*,*.pem,*.key,*lock*,id_rsa*,id_dsa*,id_ecdsa*,id_ed25519*,.netrc,.npmrc,.pypirc,credentials,*credentials.json,.git-credentials"
 	DefaultRecall        = "briefing,prompt,files"
-	DefaultBriefTokens   = 800
+	DefaultBriefTokens   = 4000
 )
 
 // Load reads the environment only. The hooks, bellek mcp and the CLI run
