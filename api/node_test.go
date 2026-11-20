@@ -48,7 +48,7 @@ func TestEveryEnumAcceptsItsOwnValuesOnly(t *testing.T) {
 		{"visibility", func(s string) bool { return api.Visibility(s).Valid() }, []string{"private", "shared"}},
 		{"task status", func(s string) bool { return api.TaskStatus(s).Valid() }, []string{"todo", "inProgress", "blocked", "review", "done", "cancelled"}},
 		{"session status", func(s string) bool { return api.SessionStatus(s).Valid() }, []string{"active", "ended"}},
-		{"edge type", func(s string) bool { return api.EdgeType(s).Valid() }, []string{"belongsTo", "parentOf", "dependsOn", "blockedBy", "workedOnBy", "produced", "relatesTo", "supersedes"}},
+		{"edge type", func(s string) bool { return api.EdgeType(s).Valid() }, []string{"belongsTo", "parentOf", "dependsOn", "blockedBy", "workedOnBy", "produced", "relatesTo", "supersedes", "readBy"}},
 		{"event type", func(s string) bool { return api.EventType(s).Valid() }, []string{"statusChanged", "claimed", "released", "handoff", "signal", "noteAdded", "progress", "prompt"}},
 		{"role", func(s string) bool { return api.Role(s).Valid() }, []string{"admin", "member"}},
 		{"workspace kind", func(s string) bool { return api.WorkspaceKind(s).Valid() }, []string{"personal", "organization"}},

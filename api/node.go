@@ -94,12 +94,13 @@ const (
 	EdgeProduced   EdgeType = "produced"
 	EdgeRelatesTo  EdgeType = "relatesTo"
 	EdgeSupersedes EdgeType = "supersedes"
+	EdgeReadBy     EdgeType = "readBy"
 )
 
 func (t EdgeType) Valid() bool {
 	switch t {
 	case EdgeBelongsTo, EdgeParentOf, EdgeDependsOn, EdgeBlockedBy,
-		EdgeWorkedOnBy, EdgeProduced, EdgeRelatesTo, EdgeSupersedes:
+		EdgeWorkedOnBy, EdgeProduced, EdgeRelatesTo, EdgeSupersedes, EdgeReadBy:
 		return true
 	}
 	return false
