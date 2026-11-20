@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/bellek-si/bellek/api"
 	"github.com/bellek-si/bellek/internal/mcpbridge"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/stretchr/testify/require"
@@ -142,4 +143,44 @@ func TestBridgePassesOnTheInstructionsOfTheServer(t *testing.T) {
 	require.NoError(t, err)
 	cs := connect(t, local, "agent")
 	require.Equal(t, "Search before you edit.", cs.InitializeResult().Instructions)
+}
+
+func TestBridgeForwardsTheSessionIDOfMemoryGetAndMemorySearchAndAddsNoneWhenItIsMissing(t *testing.T) {
+	ctx := context.Background()
+	srv := mcp.NewServer(&mcp.Implementation{Name: "remote", Version: "test"}, nil)
+	mcp.AddTool(srv, &mcp.Tool{Name: api.ToolGet.Name}, func(ctx context.Context, req *mcp.CallToolRequest, _ api.GetArgs) (*mcp.CallToolResult, any, error) {
+		res, err := echo(ctx, req)
+		return res, nil, err
+	})
+	mcp.AddTool(srv, &mcp.Tool{Name: api.ToolSearch.Name}, func(ctx context.Context, req *mcp.CallToolRequest, _ api.SearchArgs) (*mcp.CallToolResult, any, error) {
+		res, err := echo(ctx, req)
+		return res, nil, err
+	})
+	local, err := mcpbridge.New(ctx, connect(t, srv, "bridge"), mcpbridge.Locals{RepoRemote: "github.com/acme/bridged", Branch: "main"}, "test")
+	require.NoError(t, err)
+	cs := connect(t, local, "agent")
+
+	tests := []struct {
+		name string
+		tool string
+		args map[string]any
+		want map[string]any
+	}{
+		{"memory_get with a session", api.ToolGet.Name, map[string]any{"key": "widgets-12", "sessionId": "s1"},
+			map[string]any{"key": "widgets-12", "sessionId": "s1", "repoRemote": "github.com/acme/bridged"}},
+		{"memory_get without a session", api.ToolGet.Name, map[string]any{"key": "widgets-12"},
+			map[string]any{"key": "widgets-12", "repoRemote": "github.com/acme/bridged"}},
+		{"memory_search with a session", api.ToolSearch.Name, map[string]any{"q": "login", "sessionId": "s1"},
+			map[string]any{"q": "login", "sessionId": "s1", "repoRemote": "github.com/acme/bridged"}},
+		{"memory_search without a session", api.ToolSearch.Name, map[string]any{"q": "login"},
+			map[string]any{"q": "login", "repoRemote": "github.com/acme/bridged"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res, err := cs.CallTool(ctx, &mcp.CallToolParams{Name: tt.tool, Arguments: tt.args})
+			require.NoError(t, err)
+			require.False(t, res.IsError, res.Content[0].(*mcp.TextContent).Text)
+			require.Equal(t, tt.want, payload(t, res))
+		})
+	}
 }
