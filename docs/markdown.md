@@ -35,7 +35,7 @@ Rotate tokens.
 - 2026-09-16T10:00:00Z claimed auth-refresh
 ```
 
-A note or decision also carries `visibility`, `private` or `shared`. `links` are the node's outgoing edges other than the project link, `supersedes` and a live lease. A link without `kind` is a forward reference that has not been resolved yet. The timeline is the task's last 50 events, newest first. Import ignores the timeline, `version`, `createdAt` and `updatedAt`.
+A note or decision also carries `visibility`, `private` or `shared`. `links` are the node's outgoing edges other than the project link, `supersedes`, a live lease and `readBy`. A link without `kind` is a forward reference that has not been resolved yet. The timeline is the task's last 50 events, newest first. Import ignores the timeline, `version`, `createdAt` and `updatedAt`.
 
 Export stops at the first node whose body contains the marker, and the files written before it stay. Import would cut that body at the marker and supersede the node with what is left.
 

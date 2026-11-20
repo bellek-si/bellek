@@ -57,6 +57,7 @@ curl -s -X POST "https://bellek.si/mcp" \
 Field names are camelCase. Fields, defaults and rules match the `/v1` HTTP routes, whose shapes are in the [`api`](../api) package, except:
 
 - A key or id the route takes in its path is a field: `key` on `memory_get`, `task_upsert`, `task_status`, `task_claim` and `task_handoff`, and `sessionId` on `session_end`.
+- `memory_get` and `memory_search` take an optional `sessionId`. With it, every task the call returns is linked to that session, and a later change to one of those tasks reaches the session as an `info` signal that names the task and what changed. Without it the call reads the same and links nothing. The project still comes from `projectKey` or `repoRemote`, not from the session.
 - `memory_get` reads a `depth` of 0 as 1. The route returns the node without neighbors for 0.
 - `memory_get` takes no `author`, and `memory_note` no `authorId`: an agent reads and writes its own note under a key, else the shared one.
 - `peek` is HTTP only, because a briefing that marks nothing read and renews no leases is the UI's read path, not an agent's.
@@ -71,7 +72,7 @@ Leave `baseVersion` on `memory_note` and `task_upsert` empty. It is for the brow
 
 The server instructions give every client a short form of this flow. With the hooks installed, the session is already started and its briefing, with the session id, is already in context:
 
-1. `memory_search` or `memory_get` before touching a task or a file.
+1. `memory_search` or `memory_get` before touching a task or a file. Pass your `sessionId` to both, so that later changes to the tasks you read reach you.
 2. `task_upsert` for each piece of work the user asks for or you pull from a tracker such as Linear or Jira, with `parentKey` and `dependsOn` for related work. Then `task_claim` it and move it to `inProgress` with `task_status`, before your first edit, even for a small one line request. The claim returns the task's briefing, and from then on the session's prompts, edits and notes are recorded against the task until it is released, handed off or finished. A claim leaves the status alone, from `todo` a task can only go to `inProgress` or `cancelled`, and a move to the status it already has changes nothing and is not refused. Then `task_status` as it moves; `done` or `review` on the task you hold writes the handoff for you when you wrote none.
 3. `memory_note` for decisions, lessons and open questions. Without `relatedKey`, the note relates to the task you hold. When you move a task to `done` or `review`, also write a `memory_note` tagged `report` with key `<task key>-report`, `relatedKey` the task and the headings `## What`, `## Why`, `## Changes` and `## Conclusion`. The report on the task reads it.
 4. `task_handoff` if you stop mid task.

@@ -1,7 +1,7 @@
 package api
 
 // Instructions is what the MCP server sends a client when it connects.
-const Instructions = "Bellek is the shared memory for this project. With the Bellek hooks installed the session is already started and its briefing is already in context; the session id is in that context. Search with memory_search or memory_get before touching a task or a file. When the user points at earlier work, search for it first with one or two of their own words, not a guess at a tool or product name, and try other words before you conclude nothing is recorded. When the user asks for a piece of work, or you pull tasks from a tracker such as Linear or Jira, create each one with task_upsert, link related work with parentKey and dependsOn, and claim the one you start with task_claim, which returns its briefing; a claim leaves the status alone, so move a todo task to inProgress with task_status. Do all three before your first edit, even for a small one line request. Every task has an id, the project key and a number such as widgets-12; use it when you name a task to the user, and pass it wherever a task key goes. Record decisions, lessons and open questions with memory_note. Move the task with task_status: done when finished, review when it needs a look, blocked with the reason, cancelled when dropped; task_handoff when you stop mid task. When you move a task to done or review, write a memory_note tagged report with key <task key>-report and relatedKey the task, with the headings ## What, ## Why, ## Changes and ## Conclusion. Other sessions are listed in the briefing with their key and focus; a live Claude Code peer is reached with SendMessage by its name, any other session with memory_signal to its key, and a request signal arrives on that session's next prompt; answer one with kind response and the same threadId. Call session_start, then memory_briefing, only when no briefing is in context, and session_end only if you called session_start."
+const Instructions = "Bellek is the shared memory for this project. With the Bellek hooks installed the session is already started and its briefing is already in context; the session id is in that context. Search with memory_search or memory_get before touching a task or a file. Pass your sessionId to both: a task you read or find is then yours to follow, and a change another session makes to it arrives on your next prompt as an info signal that names the task; read it again with memory_get. When the user points at earlier work, search for it first with one or two of their own words, not a guess at a tool or product name, and try other words before you conclude nothing is recorded. When the user asks for a piece of work, or you pull tasks from a tracker such as Linear or Jira, create each one with task_upsert, link related work with parentKey and dependsOn, and claim the one you start with task_claim, which returns its briefing; a claim leaves the status alone, so move a todo task to inProgress with task_status. Do all three before your first edit, even for a small one line request. Every task has an id, the project key and a number such as widgets-12; use it when you name a task to the user, and pass it wherever a task key goes. Record decisions, lessons and open questions with memory_note. Move the task with task_status: done when finished, review when it needs a look, blocked with the reason, cancelled when dropped; task_handoff when you stop mid task. When you move a task to done or review, write a memory_note tagged report with key <task key>-report and relatedKey the task, with the headings ## What, ## Why, ## Changes and ## Conclusion. Other sessions are listed in the briefing with their key and focus; a live Claude Code peer is reached with SendMessage by its name, any other session with memory_signal to its key, and a request signal arrives on that session's next prompt; answer one with kind response and the same threadId. Call session_start, then memory_briefing, only when no briefing is in context, and session_end only if you called session_start."
 
 // Tool is an MCP tool; ReadOnly sets its MCP read only hint.
 type Tool struct {
@@ -48,20 +48,22 @@ type BriefingArgs struct {
 
 type GetArgs struct {
 	ScopeArgs
-	Key   string `json:"key" jsonschema:"node key, or a task id such as widgets-12"`
-	Kind  Kind   `json:"kind,omitempty" jsonschema:"task, note, decision, session or project, default task"`
-	Depth int    `json:"depth,omitempty" jsonschema:"neighbor depth 1 to 3, default 1"`
-	AsOf  string `json:"asOf,omitempty" jsonschema:"RFC3339 time to rebuild task status as of"`
+	Key       string `json:"key" jsonschema:"node key, or a task id such as widgets-12"`
+	Kind      Kind   `json:"kind,omitempty" jsonschema:"task, note, decision, session or project, default task"`
+	Depth     int    `json:"depth,omitempty" jsonschema:"neighbor depth 1 to 3, default 1"`
+	AsOf      string `json:"asOf,omitempty" jsonschema:"RFC3339 time to rebuild task status as of"`
+	SessionID string `json:"sessionId,omitempty" jsonschema:"your session id; with it, later updates to the tasks you read reach you"`
 }
 
 type SearchArgs struct {
 	ScopeArgs
-	Q       string   `json:"q" jsonschema:"one or two words the user used; every extra word narrows the search"`
-	Kinds   []string `json:"kinds,omitempty" jsonschema:"restrict text hits to these kinds; session finds who worked on something"`
-	Limit   int      `json:"limit,omitempty" jsonschema:"max text hits, default 20, at most 100"`
-	After   string   `json:"after,omitempty" jsonschema:"RFC3339, only nodes updated after this time"`
-	Before  string   `json:"before,omitempty" jsonschema:"RFC3339, only nodes updated before this time"`
-	Explain bool     `json:"explain,omitempty" jsonschema:"include the rank, via and edge score fields"`
+	Q         string   `json:"q" jsonschema:"one or two words the user used; every extra word narrows the search"`
+	Kinds     []string `json:"kinds,omitempty" jsonschema:"restrict text hits to these kinds; session finds who worked on something"`
+	Limit     int      `json:"limit,omitempty" jsonschema:"max text hits, default 20, at most 100"`
+	After     string   `json:"after,omitempty" jsonschema:"RFC3339, only nodes updated after this time"`
+	Before    string   `json:"before,omitempty" jsonschema:"RFC3339, only nodes updated before this time"`
+	Explain   bool     `json:"explain,omitempty" jsonschema:"include the rank, via and edge score fields"`
+	SessionID string   `json:"sessionId,omitempty" jsonschema:"your session id; with it, later updates to the tasks you read reach you"`
 }
 
 type NoteArgs struct {
