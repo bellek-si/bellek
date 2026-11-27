@@ -5,8 +5,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
+	"github.com/bellek-si/bellek/api"
 	"github.com/bellek-si/bellek/internal/gitinfo"
 	"github.com/stretchr/testify/require"
 )
@@ -139,4 +141,81 @@ func TestStatus(t *testing.T) {
 
 	require.NoError(t, os.WriteFile(filepath.Join(repo, ".git", "index"), []byte("not an index"), 0o600))
 	require.Nil(t, gitinfo.Status(ctx, repo), "a status git cannot read is nil, not a clean tree")
+}
+
+func TestNewRepoIDWritesOnceAndAnswersTheSameID(t *testing.T) {
+	ctx := context.Background()
+	repo, _ := newRepo(t)
+	require.Empty(t, gitinfo.RepoID(ctx, repo), "a fresh repository has no id yet")
+
+	id := gitinfo.NewRepoID(ctx, repo)
+	canonical, ok := api.CanonicalUUID(id)
+	require.True(t, ok, "the id is a uuid: %q", id)
+	require.Equal(t, canonical, id)
+	require.Equal(t, id, gitinfo.RepoID(ctx, repo), "RepoID reads what NewRepoID wrote")
+	require.Equal(t, id, gitinfo.NewRepoID(ctx, repo), "a second call answers the id the first one wrote")
+
+	out, err := exec.Command("git", "-C", repo, "config", "--local", "--get-all", "bellek.repoId").Output()
+	require.NoError(t, err)
+	require.Equal(t, id, strings.TrimSpace(string(out)), "the id is written once, not appended")
+
+	sub := filepath.Join(repo, "sub")
+	require.NoError(t, os.MkdirAll(sub, 0o755))
+	require.Equal(t, id, gitinfo.RepoID(ctx, sub), "a folder inside the repository has the same id")
+}
+
+func TestRepoIDIsSharedByALinkedWorktree(t *testing.T) {
+	ctx := context.Background()
+	repo, git := newRepo(t)
+	git("commit", "--quiet", "--allow-empty", "-m", "first")
+	linked := filepath.Join(t.TempDir(), "feature")
+	git("worktree", "add", "--quiet", "-b", "feature", linked)
+
+	id := gitinfo.NewRepoID(ctx, linked)
+	require.NotEmpty(t, id)
+	require.Equal(t, id, gitinfo.RepoID(ctx, repo), "the main worktree reads the id a linked worktree wrote")
+	require.Equal(t, id, gitinfo.NewRepoID(ctx, repo), "the main worktree does not write a second id")
+}
+
+func TestRepoIDOutsideARepository(t *testing.T) {
+	ctx := context.Background()
+	dir := t.TempDir()
+	require.Empty(t, gitinfo.RepoID(ctx, dir))
+	require.Empty(t, gitinfo.NewRepoID(ctx, dir), "no id is made outside a repository")
+	require.Empty(t, gitinfo.NewRepoID(ctx, ""), "an empty cwd has no id")
+	require.Empty(t, gitinfo.NewRepoID(ctx, filepath.Join(dir, "missing")), "a missing directory has no id")
+	require.Empty(t, gitinfo.RepoName(ctx, dir))
+	require.Empty(t, gitinfo.RepoName(ctx, ""))
+}
+
+func TestRepoIDOfAValueThatIsNotACanonicalUUIDIsEmpty(t *testing.T) {
+	ctx := context.Background()
+	for _, value := range []string{
+		"not-a-uuid",
+		"{6f1c2d1e-8a4b-4c3d-9e2f-1a2b3c4d5e6f}",
+		"urn:uuid:6f1c2d1e-8a4b-4c3d-9e2f-1a2b3c4d5e6f",
+		"6f1c2d1e8a4b4c3d9e2f1a2b3c4d5e6f",
+	} {
+		t.Run(value, func(t *testing.T) {
+			repo, git := newRepo(t)
+			git("config", "--local", "bellek.repoId", value)
+			require.Empty(t, gitinfo.RepoID(ctx, repo))
+		})
+	}
+}
+
+func TestRepoNameIsTheMainWorktreeFolder(t *testing.T) {
+	ctx := context.Background()
+	parent := t.TempDir()
+	repo, git := newRepo(t)
+	git("commit", "--quiet", "--allow-empty", "-m", "first")
+	main := filepath.Join(parent, "widgets")
+	require.NoError(t, os.Rename(repo, main))
+	linked := filepath.Join(parent, "feature")
+	cmd := exec.Command("git", "-C", main, "worktree", "add", "--quiet", "-b", "feature", linked)
+	out, err := cmd.CombinedOutput()
+	require.NoError(t, err, string(out))
+
+	require.Equal(t, "widgets", gitinfo.RepoName(ctx, main))
+	require.Equal(t, "widgets", gitinfo.RepoName(ctx, linked), "a linked worktree names the main one")
 }

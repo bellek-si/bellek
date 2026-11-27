@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -69,13 +70,15 @@ type hookRunner struct {
 
 type gitOps struct {
 	remote    func(ctx context.Context, cwd string) string
+	repoID    func(ctx context.Context, cwd string) string
+	newRepoID func(ctx context.Context, cwd string) string
 	branch    func(ctx context.Context, cwd string) string
 	diffStat  func(ctx context.Context, cwd string) string
 	worktrees func(ctx context.Context, cwd string) []string
 	status    func(ctx context.Context, cwd string) []string
 }
 
-var realGit = gitOps{remote: gitinfo.Remote, branch: gitinfo.Branch, diffStat: gitinfo.DiffStat, worktrees: gitinfo.Worktrees, status: gitinfo.Status}
+var realGit = gitOps{remote: gitinfo.Remote, repoID: gitinfo.RepoID, newRepoID: gitinfo.NewRepoID, branch: gitinfo.Branch, diffStat: gitinfo.DiffStat, worktrees: gitinfo.Worktrees, status: gitinfo.Status}
 
 // gitMainRoot is the main worktree, first in the list, because Claude Code
 // keeps the memory of every worktree under the main checkout's folder.
@@ -228,19 +231,33 @@ func (r *hookRunner) sessionStart(ctx context.Context, in hookInput) error {
 	return nil
 }
 
-var errNoRepository = errors.New("not a git repository with a remote")
+var errNoRepository = errors.New("not a git repository")
 
 func (r *hookRunner) newSession(ctx context.Context, in hookInput) (*api.SessionStartResult, error) {
 	host, _ := os.Hostname()
 	loc := r.location(ctx, in.Cwd)
+	var name string
 	if loc.RepoRemote == "" {
-		return nil, errNoRepository
+		if loc.RepoID == "" {
+			loc.RepoID = bounded(ctx, in.Cwd, r.gitOps.newRepoID)
+		}
+		if loc.RepoID == "" {
+			return nil, errNoRepository
+		}
+		if roots := r.worktrees(ctx, in.Cwd); len(roots) > 0 {
+			name = redact.Text(filepath.Base(roots[0]), 0)
+		}
 	}
 	harness, _ := api.CanonicalUUID(in.SessionID)
-	started, err := r.api.SessionStart(ctx, api.SessionStartInput{RepoRemote: loc.RepoRemote, AgentKind: "claudeCode", AgentID: host, Branch: loc.Branch, MaxTokens: r.cfg.BriefTokens, HarnessSessionID: harness})
+	started, err := r.api.SessionStart(ctx, api.SessionStartInput{RepoRemote: loc.RepoRemote, RepoID: loc.RepoID, RepoName: name, AgentKind: "claudeCode", AgentID: host, Branch: loc.Branch, MaxTokens: r.cfg.BriefTokens, HarnessSessionID: harness})
+	if client.IsCode(err, api.CodeNoRepository) {
+		// A server that does not know repoId yet.
+		return nil, errNoRepository
+	}
 	if err != nil {
 		return nil, err
 	}
+	r.state.SetAddressless(in.SessionID, loc.RepoRemote == "")
 	return started, r.state.Save(in.SessionID, started.Session.ID)
 }
 
@@ -253,8 +270,27 @@ func (r *hookRunner) restart(ctx context.Context, in hookInput) (*api.SessionSta
 func (r *hookRunner) location(ctx context.Context, cwd string) api.SessionLocationInput {
 	return api.SessionLocationInput{
 		RepoRemote: redact.Text(api.RepoAddress(r.remote(ctx, cwd)), 0),
+		RepoID:     bounded(ctx, cwd, r.gitOps.repoID),
 		Branch:     redact.Text(r.branch(ctx, cwd), 0),
 	}
+}
+
+// adoptRemote tells the server the address of a repository that got its remote
+// while the session ran, so the project takes it before a teammate's clone
+// starts a second one.
+func (r *hookRunner) adoptRemote(ctx context.Context, in hookInput, id uuid.UUID) {
+	if !r.state.Addressless(in.SessionID) {
+		return
+	}
+	loc := r.location(ctx, in.Cwd)
+	if loc.RepoRemote == "" {
+		return
+	}
+	if err := r.api.SessionLocation(ctx, id, loc); err != nil {
+		r.warn("prompt", "new remote not recorded: %v", err)
+		return
+	}
+	r.state.SetAddressless(in.SessionID, false)
 }
 
 func (r *hookRunner) cwd(ctx context.Context, in hookInput) error {
@@ -362,6 +398,7 @@ func (r *hookRunner) prompt(ctx context.Context, in hookInput) error {
 	if err := r.state.SaveRecalled(in.SessionID, marker); err != nil {
 		r.warn("prompt", "recall marker not written: %v", err)
 	}
+	r.adoptRemote(ctx, in, id)
 	return nil
 }
 

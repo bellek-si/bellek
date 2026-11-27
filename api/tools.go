@@ -33,6 +33,7 @@ var Tools = []Tool{
 type ScopeArgs struct {
 	ProjectKey string `json:"projectKey,omitempty" jsonschema:"explicit project key, overrides repoRemote; set it to read a project a search named"`
 	RepoRemote string `json:"repoRemote,omitempty" jsonschema:"git remote url or address of the repository, filled by the bridge"`
+	RepoID     string `json:"repoId,omitempty" jsonschema:"id of a repository that has no remote, filled by the bridge"`
 }
 
 type SessionArgs struct {
@@ -129,6 +130,7 @@ type TaskNextArgs struct {
 
 type SessionStartArgs struct {
 	ScopeArgs
+	RepoName         string `json:"repoName,omitempty" jsonschema:"folder name of a repository that has no remote, filled by the bridge"`
 	AgentKind        string `json:"agentKind" jsonschema:"claudeCode, codex, cursor or custom"`
 	AgentID          string `json:"agentId,omitempty" jsonschema:"machine or harness name"`
 	Branch           string `json:"branch,omitempty"`

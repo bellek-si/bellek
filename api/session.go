@@ -5,10 +5,14 @@ import "github.com/google/uuid"
 type SessionStartInput struct {
 	ProjectKey string `json:"projectKey,omitempty"`
 	RepoRemote string `json:"repoRemote,omitempty"`
-	AgentKind  string `json:"agentKind"`
-	AgentID    string `json:"agentId,omitempty"`
-	Branch     string `json:"branch,omitempty"`
-	MaxTokens  int    `json:"maxTokens,omitempty"`
+	// RepoID names a repository that has no remote address, and RepoName keys
+	// the project made for it.
+	RepoID    string `json:"repoId,omitempty"`
+	RepoName  string `json:"repoName,omitempty"`
+	AgentKind string `json:"agentKind"`
+	AgentID   string `json:"agentId,omitempty"`
+	Branch    string `json:"branch,omitempty"`
+	MaxTokens int    `json:"maxTokens,omitempty"`
 	// HarnessSessionID resumes the session in the harness that started it.
 	HarnessSessionID string `json:"harnessSessionId,omitempty"`
 }
@@ -40,6 +44,7 @@ type SessionEndInput struct {
 
 type SessionLocationInput struct {
 	RepoRemote string `json:"repoRemote"`
+	RepoID     string `json:"repoId,omitempty"`
 	Branch     string `json:"branch,omitempty"`
 }
 

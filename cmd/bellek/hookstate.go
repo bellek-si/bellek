@@ -90,6 +90,36 @@ func (s *hookState) SaveName(claudeID, name string) error {
 	return os.WriteFile(p, []byte(name), 0o600)
 }
 
+// A session started in a repository without a remote address leaves this mark,
+// so only such a session looks for a remote on every prompt.
+func (s *hookState) addresslessPath(claudeID string) (string, bool) {
+	p, ok := s.path(claudeID)
+	return p + ".addressless", ok
+}
+
+func (s *hookState) Addressless(claudeID string) bool {
+	p, ok := s.addresslessPath(claudeID)
+	if !ok {
+		return false
+	}
+	_, err := os.Stat(p)
+	return err == nil
+}
+
+func (s *hookState) SetAddressless(claudeID string, on bool) {
+	p, ok := s.addresslessPath(claudeID)
+	if !ok {
+		return
+	}
+	if !on {
+		_ = os.Remove(p)
+		return
+	}
+	if err := os.MkdirAll(s.sessions(), 0o700); err == nil {
+		_ = os.WriteFile(p, nil, 0o600)
+	}
+}
+
 func (s *hookState) Save(claudeID string, id uuid.UUID) error {
 	p, ok := s.path(claudeID)
 	if !ok {
@@ -125,6 +155,7 @@ func (s *hookState) Delete(claudeID string) {
 	if p, ok := s.namePath(claudeID); ok {
 		_ = os.Remove(p)
 	}
+	s.SetAddressless(claudeID, false)
 	s.DeleteRecall(claudeID)
 }
 
