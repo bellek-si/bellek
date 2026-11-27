@@ -27,6 +27,8 @@ func WithLogger(log *zap.SugaredLogger) Option {
 
 type Locals struct {
 	RepoRemote string
+	RepoID     string
+	RepoName   string
 	Branch     string
 }
 
@@ -35,12 +37,20 @@ func LocalsFrom(cwd string) Locals {
 }
 
 func localsAt(ctx context.Context, cwd string) Locals {
-	return Locals{RepoRemote: redact.Text(gitinfo.Remote(ctx, cwd), 0), Branch: redact.Text(gitinfo.Branch(ctx, cwd), 0)}
+	l := Locals{RepoRemote: redact.Text(gitinfo.Remote(ctx, cwd), 0), Branch: redact.Text(gitinfo.Branch(ctx, cwd), 0)}
+	if l.RepoRemote != "" {
+		l.RepoID = gitinfo.RepoID(ctx, cwd)
+		return l
+	}
+	l.RepoID = gitinfo.NewRepoID(ctx, cwd)
+	l.RepoName = redact.Text(gitinfo.RepoName(ctx, cwd), 0)
+	return l
 }
 
 func (l Locals) values() map[string]string {
 	raw, _ := json.Marshal(api.SessionStartArgs{
-		ScopeArgs: api.ScopeArgs{RepoRemote: l.RepoRemote},
+		ScopeArgs: api.ScopeArgs{RepoRemote: l.RepoRemote, RepoID: l.RepoID},
+		RepoName:  l.RepoName,
 		Branch:    l.Branch,
 	})
 	var fields map[string]any
@@ -126,11 +136,17 @@ func fill(schema any, raw json.RawMessage, locals Locals) (map[string]any, error
 		args = map[string]any{}
 	}
 	props := schemaProperties(schema)
+	// A caller that names a project or a repository means another one than
+	// this folder's, so this folder's id must not travel with it.
+	elsewhere := given(args, "projectKey") || given(args, "repoRemote")
 	for key, value := range locals.values() {
 		if _, known := props[key]; !known {
 			continue
 		}
-		if existing, ok := args[key]; ok && existing != nil && existing != "" {
+		if elsewhere && (key == "repoId" || key == "repoName") {
+			continue
+		}
+		if given(args, key) {
 			continue
 		}
 		args[key] = value
@@ -139,6 +155,11 @@ func fill(schema any, raw json.RawMessage, locals Locals) (map[string]any, error
 		args["repoRemote"] = api.RepoAddress(remote)
 	}
 	return args, nil
+}
+
+func given(args map[string]any, key string) bool {
+	v, ok := args[key]
+	return ok && v != nil && v != ""
 }
 
 func schemaProperties(schema any) map[string]any {

@@ -8,7 +8,10 @@ import (
 	"strings"
 
 	"github.com/bellek-si/bellek/api"
+	"github.com/google/uuid"
 )
+
+const repoIDKey = "bellek.repoId"
 
 func Remote(ctx context.Context, cwd string) string {
 	return api.RepoAddress(output(ctx, cwd, "config", "--get", "remote.origin.url"))
@@ -23,6 +26,36 @@ func output(ctx context.Context, cwd string, args ...string) string {
 		return ""
 	}
 	return strings.TrimSpace(string(out))
+}
+
+// RepoID is the id NewRepoID wrote into the repository's own git config, which
+// every worktree shares and no clone copies.
+func RepoID(ctx context.Context, cwd string) string {
+	id, _ := api.CanonicalUUID(output(ctx, cwd, "config", "--local", "--get", repoIDKey))
+	return id
+}
+
+// NewRepoID answers the id another call wrote first, so two sessions that
+// start together agree on one.
+func NewRepoID(ctx context.Context, cwd string) string {
+	if id := RepoID(ctx, cwd); id != "" {
+		return id
+	}
+	if output(ctx, cwd, "rev-parse", "--is-inside-work-tree") != "true" {
+		return ""
+	}
+	_ = exec.CommandContext(ctx, "git", "-C", cwd, "config", "--local", repoIDKey, uuid.NewString()).Run()
+	return RepoID(ctx, cwd)
+}
+
+// RepoName is the folder name of the main worktree, the only part of a local
+// path that names the repository.
+func RepoName(ctx context.Context, cwd string) string {
+	roots := Worktrees(ctx, cwd)
+	if len(roots) == 0 {
+		return ""
+	}
+	return filepath.Base(roots[0])
 }
 
 func Branch(ctx context.Context, cwd string) string {
